@@ -39,6 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_employee",
             "is_regular",
             "is_active",
+            "bound_device_id",
         ]
 
 
@@ -67,3 +68,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "email",
+            "first_name",
+            "last_name",
+            "phone",
+            "is_admin",
+            "is_entry",
+            "is_employee",
+            "is_regular",
+            "is_active",
+            "bound_device_id",
+        ]

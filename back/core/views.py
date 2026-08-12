@@ -46,10 +46,29 @@ YEAR_MONTH_PARAMETERS = [
 class GenerateQRTokenView(APIView):
     permission_classes = [IsEntryUser]
 
-    @extend_schema(request=GenerateQRTokenSerializer, responses={201: QRTokenSerializer})
+    @extend_schema(
+        request=GenerateQRTokenSerializer,
+        responses={201: QRTokenSerializer, 403: None},
+    )
     def post(self, request):
         serializer = GenerateQRTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        device_id = serializer.validated_data["device_id"]
+
+        with transaction.atomic():
+            # select_for_update تمنع ربط جهازين مختلفين بالتزامن عند أول استخدام
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if not user.bound_device_id:
+                user.bound_device_id = device_id
+                user.save(update_fields=["bound_device_id"])
+            elif user.bound_device_id != device_id:
+                return Response(
+                    {
+                        "detail": "This account is bound to a different device. "
+                        "Contact an administrator to reset it."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         qr_token = QRToken.objects.create(
             token=secrets.token_urlsafe(24),
