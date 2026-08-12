@@ -25,6 +25,8 @@ class QRToken(models.Model):
 
 
 class Attendance(models.Model):
+    """سجل جلسة حضور واحدة (دخول وخروج). يمكن أن يملك الموظف عدة جلسات بنفس اليوم."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="attendance_records"
     )
@@ -36,14 +38,18 @@ class Attendance(models.Model):
         related_name="attendance_records",
     )
     date = models.DateField(default=timezone.localdate)
-    check_in = models.DateTimeField(null=True, blank=True)
+    check_in = models.DateTimeField()
     check_out = models.DateTimeField(null=True, blank=True)
-    checkin_verified = models.BooleanField(default=False)
-    checkout_verified = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["-date"]
-        unique_together = ("user", "date")
+        ordering = ["-check_in"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "date"],
+                condition=models.Q(check_out__isnull=True),
+                name="one_open_session_per_user_per_day",
+            )
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.date}"

@@ -1,11 +1,16 @@
 import secrets
 from datetime import timedelta
 
+from accounts.models import User
 from accounts.permissions import IsAdminUser, IsEmployeeUser, IsEntryUser
+from accounts.serializers import UserSerializer
 from django.conf import settings
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from openpyxl import Workbook
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -14,15 +19,34 @@ from rest_framework.views import APIView
 from .models import Attendance, QRToken
 from .serializers import (
     AttendanceSerializer,
+    EmployeeAttendanceSerializer,
     GenerateQRTokenSerializer,
+    QRTokenInputSerializer,
     QRTokenSerializer,
-    ScanQRSerializer,
+    ValidateQRResponseSerializer,
+    YearMonthQuerySerializer,
 )
+
+
+def _resolve_year_month(request) -> tuple[int, int]:
+    query = YearMonthQuerySerializer(data=request.query_params)
+    query.is_valid(raise_exception=True)
+    today = timezone.localdate()
+    return (
+        query.validated_data.get("year", today.year),
+        query.validated_data.get("month", today.month),
+    )
+
+YEAR_MONTH_PARAMETERS = [
+    OpenApiParameter("year", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False),
+    OpenApiParameter("month", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False),
+]
 
 
 class GenerateQRTokenView(APIView):
     permission_classes = [IsEntryUser]
 
+    @extend_schema(request=GenerateQRTokenSerializer, responses={201: QRTokenSerializer})
     def post(self, request):
         serializer = GenerateQRTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -39,53 +63,71 @@ class GenerateQRTokenView(APIView):
         )
 
 
-class ScanQRView(APIView):
+class ValidateQRView(APIView):
+    """يتحقق فقط من أن الرمز موجود وسارٍ، بدون أي أثر جانبي — يُستدعى قبل طلب البصمة."""
+
     permission_classes = [IsEmployeeUser]
 
+    @extend_schema(request=QRTokenInputSerializer, responses={200: ValidateQRResponseSerializer})
     def post(self, request):
-        serializer = ScanQRSerializer(data=request.data)
+        serializer = QRTokenInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        qr_token = serializer.validated_data["token"]
 
-        qr_token = get_object_or_404(
-            QRToken, token=serializer.validated_data["token"]
-        )
-        if not qr_token.is_valid():
-            return Response(
-                {"detail": "رمز QR منتهي الصلاحية أو غير فعّال."},
-                status=status.HTTP_400_BAD_REQUEST,
+        return Response({"valid": True, "action": qr_token.action})
+
+
+def _check_in(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
+    """ينشئ جلسة جديدة. القيد الفريد الشرطي على الموديل يمنع أي جلسة مفتوحة ثانية بنفس اليوم حتى تحت التزامن."""
+    try:
+        with transaction.atomic():
+            attendance = Attendance.objects.create(
+                user=user,
+                date=timezone.localdate(),
+                check_in=timezone.now(),
+                qr_token=qr_token,
             )
+    except IntegrityError:
+        return None, "Already checked in today. Check out first before checking in again."
+    return attendance, None
 
-        verified = serializer.validated_data["verified"]
-        attendance, _ = Attendance.objects.get_or_create(
-            user=request.user, date=timezone.localdate()
+
+def _check_out(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
+    """يغلق آخر جلسة مفتوحة لهذا الموظف اليوم. select_for_update تمنع إغلاق نفس الجلسة مرتين بالتزامن."""
+    with transaction.atomic():
+        attendance = (
+            Attendance.objects.select_for_update()
+            .filter(user=user, date=timezone.localdate(), check_out__isnull=True)
+            .first()
         )
+        if attendance is None:
+            return None, "Cannot check out before checking in."
 
-        if qr_token.action == QRToken.Action.CHECK_IN:
-            if attendance.check_in:
-                return Response(
-                    {"detail": "تم تسجيل الحضور مسبقًا لهذا اليوم."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            attendance.check_in = timezone.now()
-            attendance.checkin_verified = verified
-        else:
-            if not attendance.check_in:
-                return Response(
-                    {"detail": "لا يمكن تسجيل الانصراف قبل تسجيل الحضور."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if attendance.check_out:
-                return Response(
-                    {"detail": "تم تسجيل الانصراف مسبقًا لهذا اليوم."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            attendance.check_out = timezone.now()
-            attendance.checkout_verified = verified
-
+        attendance.check_out = timezone.now()
         attendance.qr_token = qr_token
         attendance.save()
+    return attendance, None
 
-        return Response(AttendanceSerializer(attendance).data, status=status.HTTP_200_OK)
+
+class RecordAttendanceView(APIView):
+    """يحفظ الحضور/الانصراف فعليًا — يُستدعى بعد نجاح البصمة محليًا فقط."""
+
+    permission_classes = [IsEmployeeUser]
+
+    @extend_schema(request=QRTokenInputSerializer, responses={200: AttendanceSerializer})
+    def post(self, request):
+        serializer = QRTokenInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        qr_token = serializer.validated_data["token"]
+
+        if qr_token.action == QRToken.Action.CHECK_IN:
+            attendance, error = _check_in(request.user, qr_token)
+        else:
+            attendance, error = _check_out(request.user, qr_token)
+
+        if error:
+            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(AttendanceSerializer(attendance).data)
 
 
 class MyAttendanceView(generics.ListAPIView):
@@ -102,10 +144,9 @@ class MyAttendanceView(generics.ListAPIView):
 class ExportAttendanceView(APIView):
     permission_classes = [IsAdminUser]
 
+    @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: OpenApiTypes.BINARY})
     def get(self, request):
-        today = timezone.localdate()
-        year = int(request.query_params.get("year", today.year))
-        month = int(request.query_params.get("month", today.month))
+        year, month = _resolve_year_month(request)
 
         records = (
             Attendance.objects.filter(
@@ -125,8 +166,6 @@ class ExportAttendanceView(APIView):
                 "التاريخ",
                 "وقت الحضور",
                 "وقت الانصراف",
-                "تحقق الحضور",
-                "تحقق الانصراف",
             ]
         )
 
@@ -142,8 +181,6 @@ class ExportAttendanceView(APIView):
                     timezone.localtime(record.check_out).strftime("%H:%M:%S")
                     if record.check_out
                     else "",
-                    "نعم" if record.checkin_verified else "لا",
-                    "نعم" if record.checkout_verified else "لا",
                 ]
             )
 
@@ -155,3 +192,25 @@ class ExportAttendanceView(APIView):
         )
         workbook.save(response)
         return response
+
+
+class EmployeeListView(generics.ListAPIView):
+    queryset = User.objects.filter(is_employee=True).order_by("username")
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+
+class EmployeeDetailView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: EmployeeAttendanceSerializer})
+    def get(self, request, pk):
+        employee = get_object_or_404(User, pk=pk, is_employee=True)
+        year, month = _resolve_year_month(request)
+        attendance = Attendance.objects.filter(
+            user=employee, date__year=year, date__month=month
+        ).order_by("date")
+
+        data = UserSerializer(employee).data
+        data["attendance"] = AttendanceSerializer(attendance, many=True).data
+        return Response(data)

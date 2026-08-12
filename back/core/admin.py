@@ -11,5 +11,5 @@ class QRTokenAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ("user", "date", "check_in", "check_out", "checkin_verified", "checkout_verified")
-    list_filter = ("date", "checkin_verified", "checkout_verified")
+    list_display = ("user", "date", "check_in", "check_out")
+    list_filter = ("date",)

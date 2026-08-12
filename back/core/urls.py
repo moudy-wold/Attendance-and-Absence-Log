@@ -1,9 +1,10 @@
 from django.urls import path
 
-from .views import GenerateQRTokenView, MyAttendanceView, ScanQRView
+from .views import GenerateQRTokenView, MyAttendanceView, RecordAttendanceView, ValidateQRView
 
 urlpatterns = [
     path("qr/generate/", GenerateQRTokenView.as_view(), name="qr_generate"),
-    path("attendance/scan/", ScanQRView.as_view(), name="attendance_scan"),
+    path("qr/validate/", ValidateQRView.as_view(), name="qr_validate"),
+    path("attendance/record/", RecordAttendanceView.as_view(), name="attendance_record"),
     path("attendance/my/", MyAttendanceView.as_view(), name="attendance_my"),
 ]

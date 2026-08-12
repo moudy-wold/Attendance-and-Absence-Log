@@ -21,15 +21,3 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
-
-
-class EmployeeListView(generics.ListAPIView):
-    queryset = User.objects.filter(is_employee=True).order_by("username")
-    serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
-
-
-class EmployeeDetailView(generics.RetrieveAPIView):
-    queryset = User.objects.filter(is_employee=True)
-    serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
