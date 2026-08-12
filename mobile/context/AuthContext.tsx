@@ -3,6 +3,7 @@ import { login as loginRequest, type LoginPayload } from '../api/auth'
 import { tokenService } from '../api/tokenService'
 import { setUnauthorizedHandler } from '../api/authBridge'
 import { mapUser, type User } from '../types/user'
+import { getDeviceId } from '../lib/deviceId'
 import { AuthContext, type AuthContextValue } from './authContextValue'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -27,7 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       isBootstrapping,
       async login(payload: LoginPayload) {
-        const { data } = await loginRequest(payload)
+        const deviceId = await getDeviceId()
+        const { data } = await loginRequest({ ...payload, deviceId })
         await tokenService.setTokens(data.access, data.refresh)
         const mappedUser = mapUser(data.user)
         await tokenService.setUser(mappedUser)

@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { login as loginRequest, type LoginPayload } from '../api/auth'
 import { tokenService } from '../api/tokenService'
 import { mapUser, type User } from '../types/user'
+import { getDeviceId } from '../lib/deviceId'
 import { AuthContext, type AuthContextValue } from './authContextValue'
 
 const USER_STORAGE_KEY = 'auth_user'
@@ -24,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: Boolean(user),
       async login(payload: LoginPayload) {
-        const { data } = await loginRequest(payload)
+        const { data } = await loginRequest({ ...payload, deviceId: getDeviceId() })
         tokenService.setTokens(data.access, data.refresh)
         const mappedUser = mapUser(data.user)
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mappedUser))

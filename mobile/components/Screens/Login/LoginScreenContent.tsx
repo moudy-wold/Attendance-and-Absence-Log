@@ -10,6 +10,7 @@ import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
 import { LanguageSwitcher } from '../../Global/LanguageSwitcher'
 import { useAuth } from '../../../context/authContextValue'
+import { extractApiError } from '../../../lib/apiError'
 import { tw } from '../../../lib/tw'
 
 interface LoginForm {
@@ -59,15 +60,12 @@ export function LoginScreenContent() {
       await login(form)
       router.replace('/')
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 401) {
-        setTopError(t('auth.invalidCredentials'))
-        Toast.show({ type: 'error', text1: t('auth.invalidCredentials') })
-      } else if (isAxiosError(error) && error.response?.status === 403) {
-        setTopError(t('auth.accountSuspended'))
-        Toast.show({ type: 'error', text1: t('auth.accountSuspended') })
-      } else {
-        Toast.show({ type: 'error', text1: t('common.unexpectedError') })
-      }
+      const message =
+        isAxiosError(error) && error.response?.status === 401
+          ? t('auth.invalidCredentials')
+          : extractApiError(error, t('common.unexpectedError'))
+      setTopError(message)
+      Toast.show({ type: 'error', text1: message })
     } finally {
       setIsSubmitting(false)
     }

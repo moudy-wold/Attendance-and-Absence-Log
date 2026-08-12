@@ -4,6 +4,7 @@ import type { RawUser } from '../types/user'
 export interface LoginPayload {
   username: string
   password: string
+  deviceId?: string
 }
 
 export interface LoginResponse {
@@ -13,5 +14,9 @@ export interface LoginResponse {
 }
 
 export async function login(payload: LoginPayload) {
-  return await axiosInstance.post<LoginResponse>('/auth/login/', payload)
+  return await axiosInstance.post<LoginResponse>('/auth/login/', {
+    username: payload.username,
+    password: payload.password,
+    device_id: payload.deviceId,
+  })
 }

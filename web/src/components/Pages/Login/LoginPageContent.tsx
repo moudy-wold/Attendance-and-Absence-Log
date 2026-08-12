@@ -8,6 +8,7 @@ import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
 import { LanguageSwitcher } from '../../Global/LanguageSwitcher'
 import { useAuth } from '../../../context/authContextValue'
+import { extractApiError } from '../../../lib/apiError'
 
 interface LoginForm {
   username: string
@@ -56,15 +57,15 @@ export function LoginPageContent() {
     setIsSubmitting(true)
     setTopError(null)
     try {
-      await login(form)
-      navigate('/', { replace: true })
+      const loggedInUser = await login(form)
+      navigate(loggedInUser.isEntry ? '/kiosk' : '/', { replace: true })
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 401) {
-        setTopError(t('auth.invalidCredentials'))
-        toast.error(t('auth.invalidCredentials'))
-      } else {
-        toast.error(t('common.unexpectedError'))
-      }
+      const message =
+        isAxiosError(error) && error.response?.status === 401
+          ? t('auth.invalidCredentials')
+          : extractApiError(error, t('common.unexpectedError'))
+      setTopError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

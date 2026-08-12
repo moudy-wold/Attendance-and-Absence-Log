@@ -3,6 +3,7 @@ import type en from './en'
 export default {
   common: {
     unexpectedError: 'Bir şeyler ters gitti, lütfen tekrar deneyin',
+    back: 'Geri',
   },
   auth: {
     loginTitle: 'Giriş yap',
@@ -14,5 +15,36 @@ export default {
     usernameRequired: 'Lütfen kullanıcı adınızı veya telefon numaranızı girin',
     passwordRequired: 'Lütfen şifrenizi girin',
     logout: 'Çıkış yap',
+  },
+  home: {
+    scan: 'Devam kodunu tara',
+    history: 'Devam kayıtlarım',
+    roleAdmin: 'Yönetici',
+    roleEmployee: 'Çalışan',
+    regular: 'Kadrolu',
+    irregular: 'Geçici',
+    viewOnlyNotice: 'Yalnızca görüntüleme modundasınız. Sistemi yönetmek için yönetici panelini kullanın.',
+  },
+  scan: {
+    cameraPermission: 'Devam kodunu taramak için kamera erişimi gerekiyor.',
+    grantPermission: 'Kamera erişimine izin ver',
+    instructions: 'Kamerayı girişteki ekrana doğrultun',
+    invalidCode: 'Bu kod geçersiz veya süresi dolmuş, tekrar taramayı deneyin',
+    biometricPrompt: 'Sen olduğunu doğrula',
+    waitingBiometric: 'Devam etmek için kimliğini doğrula',
+    biometricFailed: 'Kimlik doğrulama başarısız oldu, tekrar taramayı deneyin',
+    saving: 'Devam kaydın işleniyor…',
+    checkedIn: 'Giriş kaydedildi',
+    checkedOut: 'Çıkış kaydedildi',
+    tryAgain: 'Tekrar tara',
+    backHome: 'Ana sayfaya dön',
+  },
+  history: {
+    title: 'Devam kayıtlarım',
+    date: 'Tarih',
+    checkIn: 'Giriş',
+    checkOut: 'Çıkış',
+    empty: 'Bu ay için henüz devam kaydı yok',
+    open: 'Devam ediyor',
   },
 } satisfies typeof en

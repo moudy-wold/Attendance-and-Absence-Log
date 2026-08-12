@@ -42,7 +42,19 @@
         }
       ],
       "expo-secure-store",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Camera access is required to scan the attendance QR code."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Face ID is used to confirm your identity when recording attendance."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

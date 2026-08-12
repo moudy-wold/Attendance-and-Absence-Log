@@ -1,6 +1,7 @@
 export default {
   common: {
     unexpectedError: 'Something went wrong, please try again',
+    back: 'Back',
   },
   auth: {
     loginTitle: 'Login',
@@ -12,5 +13,36 @@ export default {
     usernameRequired: 'Please enter your username or phone number',
     passwordRequired: 'Please enter your password',
     logout: 'Sign out',
+  },
+  home: {
+    scan: 'Scan attendance code',
+    history: 'My attendance',
+    roleAdmin: 'Admin',
+    roleEmployee: 'Employee',
+    regular: 'Regular',
+    irregular: 'Irregular',
+    viewOnlyNotice: 'You are browsing in view-only mode. Use the admin dashboard to manage the system.',
+  },
+  scan: {
+    cameraPermission: 'Camera access is needed to scan the attendance code.',
+    grantPermission: 'Allow camera access',
+    instructions: 'Point the camera at the screen at the entrance',
+    invalidCode: 'This code is invalid or has expired, try scanning again',
+    biometricPrompt: 'Confirm it’s you',
+    waitingBiometric: 'Confirm your identity to continue',
+    biometricFailed: 'Identity verification failed, try scanning again',
+    saving: 'Recording your attendance…',
+    checkedIn: 'Check-in recorded',
+    checkedOut: 'Check-out recorded',
+    tryAgain: 'Scan again',
+    backHome: 'Back to home',
+  },
+  history: {
+    title: 'My attendance',
+    date: 'Date',
+    checkIn: 'Check in',
+    checkOut: 'Check out',
+    empty: 'No attendance records for this month yet',
+    open: 'In progress',
   },
 }

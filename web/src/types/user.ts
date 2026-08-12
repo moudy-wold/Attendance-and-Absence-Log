@@ -9,6 +9,7 @@ export interface User {
   isActive: boolean
   isRegular: boolean
   isEmployee: boolean
+  deviceId: string | null
   /** Not implemented by the backend yet — always false until it is. */
   mustChangePassword: boolean
 }
@@ -25,6 +26,7 @@ export interface RawUser {
   is_active: boolean
   is_regular: boolean
   is_employee: boolean
+  device_id: string | null
 }
 
 export function mapUser(raw: RawUser): User {
@@ -39,6 +41,7 @@ export function mapUser(raw: RawUser): User {
     isActive: raw.is_active,
     isRegular: raw.is_regular,
     isEmployee: raw.is_employee,
+    deviceId: raw.device_id,
     mustChangePassword: false,
   }
 }

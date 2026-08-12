@@ -3,6 +3,7 @@ import type en from './en'
 export default {
   common: {
     unexpectedError: 'حدث خطأ ما، حاول مرة أخرى',
+    back: 'رجوع',
   },
   auth: {
     loginTitle: 'تسجيل الدخول',
@@ -14,5 +15,36 @@ export default {
     usernameRequired: 'الرجاء إدخال اسم المستخدم أو رقم الهاتف',
     passwordRequired: 'الرجاء إدخال كلمة المرور',
     logout: 'تسجيل الخروج',
+  },
+  home: {
+    scan: 'مسح رمز الحضور',
+    history: 'سجل حضوري',
+    roleAdmin: 'أدمن',
+    roleEmployee: 'موظف',
+    regular: 'رسمي',
+    irregular: 'غير رسمي',
+    viewOnlyNotice: 'أنت تتصفح بوضع العرض فقط. استخدم لوحة تحكم الأدمن لإدارة النظام.',
+  },
+  scan: {
+    cameraPermission: 'نحتاج صلاحية الكاميرا لمسح رمز الحضور.',
+    grantPermission: 'السماح باستخدام الكاميرا',
+    instructions: 'وجّه الكاميرا نحو شاشة الدخول',
+    invalidCode: 'هذا الرمز غير صالح أو منتهي الصلاحية، حاول المسح مرة أخرى',
+    biometricPrompt: 'أكّد أنك أنت',
+    waitingBiometric: 'أكّد هويتك للمتابعة',
+    biometricFailed: 'فشل التحقق من الهوية، حاول المسح مرة أخرى',
+    saving: 'جاري تسجيل حضورك…',
+    checkedIn: 'تم تسجيل دخولك',
+    checkedOut: 'تم تسجيل خروجك',
+    tryAgain: 'مسح مرة أخرى',
+    backHome: 'العودة للرئيسية',
+  },
+  history: {
+    title: 'سجل حضوري',
+    date: 'التاريخ',
+    checkIn: 'الدخول',
+    checkOut: 'الخروج',
+    empty: 'لا يوجد سجلات حضور لهذا الشهر بعد',
+    open: 'جارٍ الآن',
   },
 } satisfies typeof en

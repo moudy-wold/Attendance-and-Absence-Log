@@ -33,6 +33,8 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="history" />
       </Stack.Protected>
     </Stack>
   );

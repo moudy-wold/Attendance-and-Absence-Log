@@ -1,0 +1,97 @@
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { QRCodeSVG } from 'qrcode.react'
+import { generateQrToken, type QrAction, type QrToken } from '../../../api/qr'
+import { AdminHeader } from '../../Global/AdminHeader'
+
+const REFRESH_SAFETY_MARGIN_MS = 1500
+
+export function KioskPageContent() {
+  const { t } = useTranslation()
+
+  const [action, setAction] = useState<QrAction>('check_in')
+  const [qrToken, setQrToken] = useState<QrToken | null>(null)
+  const [hasError, setHasError] = useState(false)
+  const [secondsLeft, setSecondsLeft] = useState(0)
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    function scheduleNext(delayMs: number) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(fetchToken, delayMs)
+    }
+
+    function tickCountdown(expiresAt: string) {
+      if (tickRef.current) clearInterval(tickRef.current)
+      tickRef.current = setInterval(() => {
+        const remaining = Math.max(0, Math.round((new Date(expiresAt).getTime() - Date.now()) / 1000))
+        setSecondsLeft(remaining)
+      }, 250)
+    }
+
+    async function fetchToken() {
+      try {
+        const { data } = await generateQrToken(action)
+        if (cancelled) return
+        setQrToken(data)
+        setHasError(false)
+        tickCountdown(data.expires_at)
+        const delay = Math.max(1000, new Date(data.expires_at).getTime() - Date.now() - REFRESH_SAFETY_MARGIN_MS)
+        scheduleNext(delay)
+      } catch {
+        if (cancelled) return
+        setHasError(true)
+        scheduleNext(3000)
+      }
+    }
+
+    fetchToken()
+
+    return () => {
+      cancelled = true
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (tickRef.current) clearInterval(tickRef.current)
+    }
+  }, [action])
+
+  return (
+    <div className="flex min-h-full flex-col bg-neutral-50">
+      <AdminHeader title={t('kiosk.title')} />
+
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
+        <div className="flex gap-2 rounded-lg border border-neutral-200 bg-white p-1">
+          {(['check_in', 'check_out'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setAction(option)}
+              className={`rounded-md px-5 py-2 text-sm font-medium transition-colors ${
+                action === option ? 'bg-neutral-900 text-white' : 'text-neutral-500 hover:bg-neutral-100'
+              }`}
+            >
+              {option === 'check_in' ? t('kiosk.modeCheckIn') : t('kiosk.modeCheckOut')}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex aspect-square w-72 max-w-full items-center justify-center rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          {qrToken ? (
+            <QRCodeSVG value={qrToken.token} size={256} className="h-full w-full" />
+          ) : (
+            <span className="text-sm text-neutral-400">{hasError ? t('kiosk.error') : t('kiosk.generating')}</span>
+          )}
+        </div>
+
+        {qrToken && (
+          <p className="text-sm text-neutral-500">
+            {t('kiosk.expiresLabel')} {secondsLeft}s
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
