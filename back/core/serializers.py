@@ -6,7 +6,6 @@ from .models import Attendance, QRToken
 
 class GenerateQRTokenSerializer(serializers.Serializer):
     action = serializers.ChoiceField(choices=QRToken.Action.choices)
-    device_id = serializers.CharField()
 
 
 class QRTokenSerializer(serializers.ModelSerializer):

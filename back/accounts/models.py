@@ -11,11 +11,11 @@ class User(AbstractUser):
     is_regular = models.BooleanField(
         default=True, help_text="True = دوام كامل، False = دوام جزئي"
     )
-    bound_device_id = models.CharField(
+    device_id = models.CharField(
         max_length=255,
         null=True,
         blank=True,
-        help_text="معرّف الجهاز المرتبط بحساب موظف الدخول — يُضبط تلقائيًا أول استخدام",
+        help_text="معرّف الجهاز المرتبط بالحساب — يُضبط تلقائيًا أول استخدام",
     )
 
     @property
