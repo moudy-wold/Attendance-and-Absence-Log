@@ -81,7 +81,7 @@ export function CreateEmployeePageContent() {
         is_regular: form.accountType === 'employee' ? form.isRegular : true,
       })
       toast.success(t('employees.form.created'))
-      navigate('/', { replace: true })
+      navigate(form.accountType === 'entry' ? '/entry-accounts' : '/employees', { replace: true })
     } catch (error) {
       toast.error(extractApiError(error, t('common.unexpectedError')))
     } finally {

@@ -4,14 +4,17 @@ import { EmployeesPageContent } from './components/Pages/Employees/EmployeesPage
 import { CreateEmployeePageContent } from './components/Pages/Employees/CreateEmployeePageContent'
 import { EmployeeDetailPageContent } from './components/Pages/Employees/EmployeeDetailPageContent'
 import { KioskPageContent } from './components/Pages/Kiosk/KioskPageContent'
+import { EntryAccountsPageContent } from './components/Pages/EntryAccounts/EntryAccountsPageContent'
+import { AdminStatsPageContent } from './components/Pages/Stats/AdminStatsPageContent'
 import { SettingsPageContent } from './components/Pages/Settings/SettingsPageContent'
 import { RequireAuth, RequireGuest } from './components/Global/RequireAuth'
+import { AdminLayout } from './components/Global/AdminLayout'
 import { useAuth } from './context/authContextValue'
 
-function Home() {
+function AdminArea() {
   const { user } = useAuth()
   if (user?.isEntry) return <Navigate to="/kiosk" replace />
-  return <EmployeesPageContent />
+  return <AdminLayout />
 }
 
 export const router = createBrowserRouter([
@@ -24,30 +27,6 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/',
-    element: (
-      <RequireAuth>
-        <Home />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: '/employees/new',
-    element: (
-      <RequireAuth>
-        <CreateEmployeePageContent />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: '/employees/:id',
-    element: (
-      <RequireAuth>
-        <EmployeeDetailPageContent />
-      </RequireAuth>
-    ),
-  },
-  {
     path: '/kiosk',
     element: (
       <RequireAuth>
@@ -56,11 +35,19 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/settings',
+    path: '/',
     element: (
       <RequireAuth>
-        <SettingsPageContent />
+        <AdminArea />
       </RequireAuth>
     ),
+    children: [
+      { index: true, element: <AdminStatsPageContent /> },
+      { path: 'employees', element: <EmployeesPageContent /> },
+      { path: 'employees/new', element: <CreateEmployeePageContent /> },
+      { path: 'employees/:id', element: <EmployeeDetailPageContent /> },
+      { path: 'entry-accounts', element: <EntryAccountsPageContent /> },
+      { path: 'settings', element: <SettingsPageContent /> },
+    ],
   },
 ])

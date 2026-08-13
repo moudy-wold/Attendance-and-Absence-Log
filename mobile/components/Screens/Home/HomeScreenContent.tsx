@@ -32,6 +32,9 @@ export function HomeScreenContent() {
           <Button variant="secondary" onPress={() => router.push('/history')}>
             {t('home.history')}
           </Button>
+          <Button variant="secondary" onPress={() => router.push('/stats')}>
+            {t('stats.title')}
+          </Button>
         </View>
       ) : (
         <View style={tw`rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900`}>

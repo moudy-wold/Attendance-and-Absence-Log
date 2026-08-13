@@ -58,3 +58,49 @@ class EmployeeAttendanceSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ["attendance"]
+
+
+class DailyAttendanceCountSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    present_count = serializers.IntegerField()
+
+
+class TopEmployeeStatSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    value = serializers.IntegerField()
+
+
+class AdminStatsOverviewSerializer(serializers.Serializer):
+    year = serializers.IntegerField()
+    month = serializers.IntegerField()
+    working_days = serializers.IntegerField()
+    total_employees = serializers.IntegerField()
+    regular_count = serializers.IntegerField()
+    irregular_count = serializers.IntegerField()
+    active_count = serializers.IntegerField()
+    suspended_count = serializers.IntegerField()
+    entry_account_count = serializers.IntegerField()
+    attendance_rate = serializers.FloatField()
+    total_present_days = serializers.IntegerField()
+    total_absent_days = serializers.IntegerField()
+    total_late_minutes = serializers.IntegerField()
+    daily_trend = DailyAttendanceCountSerializer(many=True)
+    top_late = TopEmployeeStatSerializer(many=True)
+    top_absent = TopEmployeeStatSerializer(many=True)
+
+
+class DailyLateMinutesSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    late_minutes = serializers.IntegerField()
+
+
+class EmployeeStatsSerializer(serializers.Serializer):
+    year = serializers.IntegerField()
+    month = serializers.IntegerField()
+    working_days = serializers.IntegerField()
+    present_days = serializers.IntegerField()
+    absent_days = serializers.IntegerField()
+    late_minutes = serializers.IntegerField()
+    on_time_rate = serializers.FloatField()
+    daily_late_minutes = DailyLateMinutesSerializer(many=True)

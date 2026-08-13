@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { getEmployee, updateUser, exportAttendance } from '../../../api/admin'
+import { getEmployee, updateUser, exportEmployeeAttendance } from '../../../api/admin'
 import { mapUser, type User } from '../../../types/user'
 import { mapAttendance, type Attendance } from '../../../types/attendance'
 import { extractApiError } from '../../../lib/apiError'
@@ -81,7 +81,7 @@ export function EmployeeDetailPageContent() {
   async function handleExport() {
     setIsExporting(true)
     try {
-      const { data } = await exportAttendance(year, month)
+      const { data } = await exportEmployeeAttendance(employeeId, year, month)
       const url = URL.createObjectURL(data)
       const link = document.createElement('a')
       link.href = url
@@ -97,7 +97,7 @@ export function EmployeeDetailPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={employee?.fullName ?? '…'} onBack={() => navigate('/')} />
+      <AdminHeader title={employee?.fullName ?? '…'} onBack={() => navigate('/employees')} />
 
       {!employee ? (
         <div className="p-6">
@@ -179,7 +179,7 @@ export function EmployeeDetailPageContent() {
               <Button
                 onClick={handleExport}
                 loading={isExporting}
-                className="w-fit bg-white px-3 py-1.5 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 hover:bg-neutral-50"
+                className="w-fit px-3 py-1.5 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 hover:bg-neutral-50"
               >
                 {t('employeeDetail.export')}
               </Button>

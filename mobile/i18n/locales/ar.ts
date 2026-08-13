@@ -47,6 +47,15 @@ export default {
     empty: 'لا يوجد سجلات حضور لهذا الشهر بعد',
     open: 'جارٍ الآن',
   },
+  stats: {
+    title: 'إحصائياتي',
+    presentDays: 'أيام الحضور',
+    absentDays: 'أيام الغياب',
+    lateMinutes: 'دقائق التأخير',
+    onTimeRate: 'نسبة الالتزام',
+    dailyLateTitle: 'دقائق التأخير يوميًا',
+    noData: 'لا يوجد حضور مسجَّل بعد هذا الشهر',
+  },
   changePassword: {
     title: 'حدّد كلمة مرور جديدة',
     subtitle: 'هذه أول مرة تسجّل فيها الدخول — اختر كلمة مرور جديدة للمتابعة.',

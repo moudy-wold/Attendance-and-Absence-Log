@@ -47,6 +47,15 @@ export default {
     empty: 'Bu ay için henüz devam kaydı yok',
     open: 'Devam ediyor',
   },
+  stats: {
+    title: 'İstatistiklerim',
+    presentDays: 'Devam edilen gün',
+    absentDays: 'Devamsızlık günü',
+    lateMinutes: 'Geç kalma (dakika)',
+    onTimeRate: 'Zamanında gelme oranı',
+    dailyLateTitle: 'Günlük geç kalma (dakika)',
+    noData: 'Bu ay için henüz devam kaydı yok',
+  },
   changePassword: {
     title: 'Yeni bir şifre belirle',
     subtitle: 'Bu ilk giriş yapışınız — devam etmek için yeni bir şifre seçin.',

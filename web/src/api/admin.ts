@@ -49,6 +49,10 @@ export async function listEmployees(params: ListEmployeesParams = {}) {
   return await axiosInstance.get<Paginated<RawUser>>('/admin/employees/', { params })
 }
 
+export async function listEntryUsers(params: ListEmployeesParams = {}) {
+  return await axiosInstance.get<Paginated<RawUser>>('/admin/entry-users/', { params })
+}
+
 export async function getEmployee(id: number, year: number, month: number) {
   return await axiosInstance.get<RawEmployeeAttendance>(`/admin/employees/${id}/`, {
     params: { year, month },
@@ -56,15 +60,30 @@ export async function getEmployee(id: number, year: number, month: number) {
 }
 
 /** The export endpoint requires the auth header, so it can't be a plain <a href>. */
-export async function exportAttendance(year: number, month: number) {
-  return await axiosInstance.get<Blob>('/admin/attendance/export/', {
+export async function exportEmployeeAttendance(id: number, year: number, month: number) {
+  return await axiosInstance.get<Blob>(`/admin/employees/${id}/export/`, {
     params: { year, month },
+    responseType: 'blob',
+  })
+}
+
+export interface ExportAttendanceSummaryParams extends ListEmployeesParams {
+  lang: string
+}
+
+/** Exports the same filtered/searched results currently shown on the employees list, with column
+ *  headers translated to match the site's current language. */
+export async function exportAttendanceSummary(params: ExportAttendanceSummaryParams) {
+  return await axiosInstance.get<Blob>('/admin/attendance/summary-export/', {
+    params,
     responseType: 'blob',
   })
 }
 
 export interface SystemSettings {
   qr_token_lifetime_seconds: number
+  min_session_duration_seconds: number
+  work_start_time: string
 }
 
 export async function getSystemSettings() {

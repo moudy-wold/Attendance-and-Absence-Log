@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    AdminStatsOverviewView,
     EmployeeDetailView,
     EmployeeExportAttendanceView,
     EmployeeListView,
@@ -24,4 +25,5 @@ urlpatterns = [
     ),
     path("entry-users/", EntryUserListView.as_view(), name="entry_user_list"),
     path("settings/", SystemSettingsView.as_view(), name="system_settings"),
+    path("stats/overview/", AdminStatsOverviewView.as_view(), name="admin_stats_overview"),
 ]

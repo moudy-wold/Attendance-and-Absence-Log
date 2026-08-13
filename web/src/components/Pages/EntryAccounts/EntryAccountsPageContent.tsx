@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { listEmployees, exportAttendanceSummary } from '../../../api/admin'
+import { listEntryUsers, updateUser } from '../../../api/admin'
 import { mapUser, type User } from '../../../types/user'
 import { extractApiError } from '../../../lib/apiError'
 import { AdminHeader } from '../../Global/AdminHeader'
@@ -13,23 +13,21 @@ import { SelectField } from '../../Global/Select'
 
 type TriState = 'all' | 'yes' | 'no'
 
-export function EmployeesPageContent() {
-  const { t, i18n } = useTranslation()
+export function EntryAccountsPageContent() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [employees, setEmployees] = useState<User[] | null>(null)
+  const [entryUsers, setEntryUsers] = useState<User[] | null>(null)
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [regularFilter, setRegularFilter] = useState<TriState>('all')
   const [activeFilter, setActiveFilter] = useState<TriState>('all')
-  const [isExporting, setIsExporting] = useState(false)
+  const [pendingId, setPendingId] = useState<number | null>(null)
 
   const pageSize = 10
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
 
-  // Debounce the search box before it hits the API.
   useEffect(() => {
     const id = setTimeout(() => {
       setSearch(searchInput)
@@ -40,17 +38,16 @@ export function EmployeesPageContent() {
 
   useEffect(() => {
     let cancelled = false
-    setEmployees(null)
+    setEntryUsers(null)
 
-    listEmployees({
+    listEntryUsers({
       page,
       search: search || undefined,
-      is_regular: regularFilter === 'all' ? undefined : regularFilter === 'yes',
       is_active: activeFilter === 'all' ? undefined : activeFilter === 'yes',
     })
       .then(({ data }) => {
         if (cancelled) return
-        setEmployees(data.results.map(mapUser))
+        setEntryUsers(data.results.map(mapUser))
         setCount(data.count)
       })
       .catch((error) => {
@@ -60,33 +57,39 @@ export function EmployeesPageContent() {
     return () => {
       cancelled = true
     }
-  }, [page, search, regularFilter, activeFilter, t])
+  }, [page, search, activeFilter, t])
 
-  async function handleExport() {
-    setIsExporting(true)
+  async function handleToggleActive(user: User, checked: boolean) {
+    setPendingId(user.id)
     try {
-      const { data } = await exportAttendanceSummary({
-        search: search || undefined,
-        is_regular: regularFilter === 'all' ? undefined : regularFilter === 'yes',
-        is_active: activeFilter === 'all' ? undefined : activeFilter === 'yes',
-        lang: i18n.language,
-      })
-      const url = URL.createObjectURL(data)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `attendance-summary-${new Date().toISOString().slice(0, 7)}.xlsx`
-      link.click()
-      URL.revokeObjectURL(url)
+      const { data } = await updateUser(user.id, { is_active: checked })
+      const updated = mapUser(data)
+      setEntryUsers((prev) => prev?.map((u) => (u.id === updated.id ? updated : u)) ?? prev)
     } catch (error) {
       toast.error(extractApiError(error, t('common.unexpectedError')))
     } finally {
-      setIsExporting(false)
+      setPendingId(null)
+    }
+  }
+
+  async function handleResetDevice(user: User) {
+    if (!window.confirm(t('employeeDetail.resetDeviceConfirm'))) return
+    setPendingId(user.id)
+    try {
+      const { data } = await updateUser(user.id, { device_id: null })
+      const updated = mapUser(data)
+      setEntryUsers((prev) => prev?.map((u) => (u.id === updated.id ? updated : u)) ?? prev)
+      toast.success(t('employeeDetail.resetDeviceSuccess'))
+    } catch (error) {
+      toast.error(extractApiError(error, t('common.unexpectedError')))
+    } finally {
+      setPendingId(null)
     }
   }
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('employees.title')} />
+      <AdminHeader title={t('entryAccounts.title')} />
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -98,20 +101,6 @@ export function EmployeesPageContent() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t('employees.searchPlaceholder')}
               />
-            </div>
-            <div className="w-40">
-              <SelectField
-                label={t('employees.type')}
-                value={regularFilter}
-                onChange={(e) => {
-                  setRegularFilter(e.target.value as TriState)
-                  setPage(1)
-                }}
-              >
-                <option value="all">{t('employees.filterAll')}</option>
-                <option value="yes">{t('employees.regular')}</option>
-                <option value="no">{t('employees.irregular')}</option>
-              </SelectField>
             </div>
             <div className="w-40">
               <SelectField
@@ -128,18 +117,9 @@ export function EmployeesPageContent() {
               </SelectField>
             </div>
           </div>
-          <div className="flex items-end gap-2">
-            <Button
-              onClick={handleExport}
-              loading={isExporting}
-              className="w-fit px-4 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 hover:bg-neutral-50"
-            >
-              {t('employees.exportExcel')}
-            </Button>
-            <Button className="w-fit px-4" onClick={() => navigate('/employees/new')}>
-              {t('employees.create')}
-            </Button>
-          </div>
+          <Button className="w-fit px-4" onClick={() => navigate('/employees/new')}>
+            {t('entryAccounts.create')}
+          </Button>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
@@ -148,13 +128,13 @@ export function EmployeesPageContent() {
               <tr className="border-b border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
                 <th className="px-4 py-3 text-start font-medium">{t('employees.name')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('employees.phone')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.role')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.type')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('entryAccounts.device')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('employees.status')}</th>
+                <th className="px-4 py-3 text-start font-medium" />
               </tr>
             </thead>
             <tbody>
-              {employees === null &&
+              {entryUsers === null &&
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-neutral-100 last:border-0">
                     <td className="px-4 py-3.5" colSpan={5}>
@@ -163,38 +143,52 @@ export function EmployeesPageContent() {
                   </tr>
                 ))}
 
-              {employees !== null && employees.length === 0 && (
+              {entryUsers !== null && entryUsers.length === 0 && (
                 <tr>
                   <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={5}>
-                    {t('employees.empty')}
+                    {t('entryAccounts.empty')}
                   </td>
                 </tr>
               )}
 
-              {employees?.map((employee) => (
-                <tr
-                  key={employee.id}
-                  onClick={() => navigate(`/employees/${employee.id}`)}
-                  className="cursor-pointer border-b border-neutral-100 transition-colors last:border-0 hover:bg-neutral-50"
-                >
-                  <td className="px-4 py-3.5 font-medium text-neutral-800">{employee.fullName}</td>
-                  <td className="px-4 py-3.5 text-neutral-500">{employee.phone || '—'}</td>
+              {entryUsers?.map((user) => (
+                <tr key={user.id} className="border-b border-neutral-100 last:border-0">
+                  <td className="px-4 py-3.5 font-medium text-neutral-800">{user.fullName}</td>
+                  <td className="px-4 py-3.5 text-neutral-500">{user.phone || '—'}</td>
                   <td className="px-4 py-3.5">
-                    <Badge tone="neutral">
-                      {employee.isEntry ? t('employees.roleEntry') : t('employees.roleEmployee')}
+                    <Badge tone={user.deviceId ? 'green' : 'neutral'}>
+                      {user.deviceId ? t('employeeDetail.deviceBound') : t('employeeDetail.deviceNotBound')}
                     </Badge>
                   </td>
                   <td className="px-4 py-3.5">
-                    {employee.isEmployee && (
-                      <Badge tone={employee.isRegular ? 'green' : 'amber'}>
-                        {employee.isRegular ? t('employees.regular') : t('employees.irregular')}
-                      </Badge>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={user.isActive}
+                      disabled={pendingId === user.id}
+                      onClick={() => handleToggleActive(user, !user.isActive)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+                        user.isActive ? 'bg-neutral-900' : 'bg-neutral-200'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 start-0.5 size-5 rounded-full bg-white shadow transition-transform ${
+                          user.isActive ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3.5 text-end">
+                    {user.deviceId && (
+                      <button
+                        type="button"
+                        disabled={pendingId === user.id}
+                        onClick={() => handleResetDevice(user)}
+                        className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-50"
+                      >
+                        {t('employeeDetail.resetDevice')}
+                      </button>
                     )}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <Badge tone={employee.isActive ? 'green' : 'red'}>
-                      {employee.isActive ? t('employees.active') : t('employees.suspended')}
-                    </Badge>
                   </td>
                 </tr>
               ))}

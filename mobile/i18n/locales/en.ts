@@ -45,6 +45,15 @@ export default {
     empty: 'No attendance records for this month yet',
     open: 'In progress',
   },
+  stats: {
+    title: 'My statistics',
+    presentDays: 'Days present',
+    absentDays: 'Days absent',
+    lateMinutes: 'Late minutes',
+    onTimeRate: 'On-time rate',
+    dailyLateTitle: 'Late minutes per day',
+    noData: 'No attendance recorded yet this month',
+  },
   changePassword: {
     title: 'Set a new password',
     subtitle: 'This is your first time signing in — choose a new password to continue.',
