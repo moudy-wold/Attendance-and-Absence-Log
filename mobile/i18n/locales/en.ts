@@ -45,4 +45,17 @@ export default {
     empty: 'No attendance records for this month yet',
     open: 'In progress',
   },
+  changePassword: {
+    title: 'Set a new password',
+    subtitle: 'This is your first time signing in — choose a new password to continue.',
+    oldPassword: 'Current password',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm new password',
+    oldPasswordRequired: 'Please enter your current password',
+    tooShort: 'Password must be at least 8 characters',
+    numericOnly: 'Password cannot be numbers only',
+    mismatch: 'Passwords do not match',
+    submit: 'Change password',
+    success: 'Password changed',
+  },
 }

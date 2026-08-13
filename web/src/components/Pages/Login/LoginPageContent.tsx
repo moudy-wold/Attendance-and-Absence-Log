@@ -73,9 +73,7 @@ export function LoginPageContent() {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-6 bg-neutral-50 px-4 py-10">
-      <div className="w-full max-w-sm self-end">
-        <LanguageSwitcher />
-      </div>
+
 
       <form
         onSubmit={handleSubmit}
@@ -108,6 +106,9 @@ export function LoginPageContent() {
         <Button type="submit" loading={isSubmitting}>
           {t('auth.submit')}
         </Button>
+        <div className="max-w-sm mx-auto ">
+          <LanguageSwitcher />
+        </div>
       </form>
     </div>
   )

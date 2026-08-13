@@ -44,6 +44,24 @@ export function AdminHeader({ title, onBack }: AdminHeaderProps) {
 
       <div className="flex items-center gap-3">
         <span className="hidden text-sm text-neutral-500 sm:inline">{user?.fullName}</span>
+        {user?.isAdmin && (
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            aria-label={t('settings.title')}
+            className="flex size-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100"
+          >
+            <svg viewBox="0 0 20 20" fill="none" className="size-4.5" aria-hidden="true">
+              <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+              <path
+                d="M10 2.5v2M10 15.5v2M17.5 10h-2M4.5 10h-2M15.36 4.64l-1.42 1.42M6.06 13.94l-1.42 1.42M15.36 15.36l-1.42-1.42M6.06 6.06 4.64 4.64"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
         <LanguageSwitcher />
         <button
           type="button"

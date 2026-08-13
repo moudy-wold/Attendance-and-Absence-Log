@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { View, Text } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useTranslation } from 'react-i18next'
@@ -23,7 +23,7 @@ const fieldOrder: (keyof LoginForm)[] = ['username', 'password']
 export function LoginScreenContent() {
   const { t } = useTranslation()
   const { login } = useAuth()
-
+  const passwordRef = useRef<any>(null)
   const [form, setForm] = useState<LoginForm>({ username: '', password: '' })
   const [errors, setErrors] = useState<Partial<Record<keyof LoginForm, string>>>({})
   const [topError, setTopError] = useState<string | null>(null)
@@ -59,7 +59,8 @@ export function LoginScreenContent() {
     try {
       await login(form)
       router.replace('/')
-    } catch (error) {
+    } catch (error: any) {
+      console.log('Login error:', error?.response?.data)
       const message =
         isAxiosError(error) && error.response?.status === 401
           ? t('auth.invalidCredentials')
@@ -78,7 +79,7 @@ export function LoginScreenContent() {
       keyboardShouldPersistTaps="handled"
       bottomOffset={20}
     >
-      <View style={tw`self-end`}>
+      <View style={tw`mx-auto `}>
         <LanguageSwitcher />
       </View>
 
@@ -102,6 +103,8 @@ export function LoginScreenContent() {
           error={errors.username}
           autoCapitalize="none"
           autoCorrect={false}
+          autoComplete="username"
+          onSubmitEditing={() => passwordRef.current?.focus()}
         />
 
         <PasswordField
@@ -109,6 +112,7 @@ export function LoginScreenContent() {
           value={form.password}
           onChangeText={handleChange('password')}
           error={errors.password}
+          ref={passwordRef}
         />
 
         <Button onPress={handleSubmit} loading={isSubmitting}>

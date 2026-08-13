@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-1-2gm!_6bu8*@%s+_&o(9i0wh0$!ph+0@$t(8qb_4ztv*&py*v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.1.2","127.0.0.1"]
 
 
 # Application definition
@@ -73,15 +73,19 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
 }
 
-# Dev-only: allow the local Vite dev server (web admin dashboard) to call this API.
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+QR_TOKEN_LIFETIME_SECONDS = 15
+
+# Dev-only: allow the local Vite dev server (web admin dashboard) to call this API,
+# on whichever port Vite happens to pick (5173 is taken -> it bumps to 5174, etc).
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.LogErrorResponseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

@@ -40,6 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenService.clear()
         setUser(null)
       },
+      updateUser(patch: Partial<User>) {
+        setUser((prev) => {
+          if (!prev) return prev
+          const next = { ...prev, ...patch }
+          tokenService.setUser(next)
+          return next
+        })
+      },
     }),
     [user, isBootstrapping],
   )

@@ -4,6 +4,7 @@ import { EmployeesPageContent } from './components/Pages/Employees/EmployeesPage
 import { CreateEmployeePageContent } from './components/Pages/Employees/CreateEmployeePageContent'
 import { EmployeeDetailPageContent } from './components/Pages/Employees/EmployeeDetailPageContent'
 import { KioskPageContent } from './components/Pages/Kiosk/KioskPageContent'
+import { SettingsPageContent } from './components/Pages/Settings/SettingsPageContent'
 import { RequireAuth, RequireGuest } from './components/Global/RequireAuth'
 import { useAuth } from './context/authContextValue'
 
@@ -51,6 +52,14 @@ export const router = createBrowserRouter([
     element: (
       <RequireAuth>
         <KioskPageContent />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <RequireAuth>
+        <SettingsPageContent />
       </RequireAuth>
     ),
   },

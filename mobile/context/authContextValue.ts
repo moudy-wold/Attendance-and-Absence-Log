@@ -8,6 +8,7 @@ export interface AuthContextValue {
   isBootstrapping: boolean
   login: (payload: LoginPayload) => Promise<User>
   logout: () => void
+  updateUser: (patch: Partial<User>) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

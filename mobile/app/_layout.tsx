@@ -13,9 +13,10 @@ import { AuthProvider } from '../context/AuthContext';
 import { useAuth } from '../context/authContextValue';
 import { useSyncLayoutDirection } from '../i18n/rtl';
 import { tw } from '../lib/tw';
+import { ForcedChangePasswordModal } from '../components/Global/ForcedChangePasswordModal';
 
 function RootNavigator() {
-  const { isAuthenticated, isBootstrapping } = useAuth();
+  const { user, isAuthenticated, isBootstrapping } = useAuth();
   useSyncLayoutDirection();
 
   if (isBootstrapping) {
@@ -27,16 +28,19 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!isAuthenticated}>
-        <Stack.Screen name="login" />
-      </Stack.Protected>
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="history" />
-      </Stack.Protected>
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+        <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="history" />
+        </Stack.Protected>
+      </Stack>
+      {isAuthenticated && user?.isFirstLogin && <ForcedChangePasswordModal />}
+    </>
   );
 }
 

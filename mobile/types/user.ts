@@ -1,6 +1,8 @@
 export interface User {
   id: number
   username: string
+  firstName: string
+  lastName: string
   fullName: string
   email: string | null
   phone: string
@@ -10,15 +12,15 @@ export interface User {
   isRegular: boolean
   isEmployee: boolean
   deviceId: string | null
-  /** Not implemented by the backend yet — always false until it is. */
-  mustChangePassword: boolean
+  isFirstLogin: boolean
 }
 
 /** Raw shape returned by the backend's UserSerializer (snake_case). */
 export interface RawUser {
   id: number
   username: string
-  full_name: string
+  first_name: string
+  last_name: string
   email: string | null
   phone: string
   is_admin: boolean
@@ -27,13 +29,16 @@ export interface RawUser {
   is_regular: boolean
   is_employee: boolean
   device_id: string | null
+  is_first_login: boolean
 }
 
 export function mapUser(raw: RawUser): User {
   return {
     id: raw.id,
     username: raw.username,
-    fullName: raw.full_name,
+    firstName: raw.first_name,
+    lastName: raw.last_name,
+    fullName: `${raw.first_name} ${raw.last_name}`.trim() || raw.username,
     email: raw.email,
     phone: raw.phone,
     isAdmin: raw.is_admin,
@@ -42,6 +47,6 @@ export function mapUser(raw: RawUser): User {
     isRegular: raw.is_regular,
     isEmployee: raw.is_employee,
     deviceId: raw.device_id,
-    mustChangePassword: false,
+    isFirstLogin: raw.is_first_login,
   }
 }

@@ -11,7 +11,7 @@ export function HomeScreenContent() {
   const { user, logout } = useAuth()
 
   return (
-    <View style={tw`flex-1 gap-6 bg-neutral-50 p-5 pt-16 dark:bg-neutral-950`}>
+    <View style={tw`flex-1 gap-6 bg-neutral-50 p-5 dark:bg-neutral-950`}>
       <View style={tw`flex-row items-center justify-between`}>
         <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>{user?.fullName}</Text>
         <LanguageSwitcher />

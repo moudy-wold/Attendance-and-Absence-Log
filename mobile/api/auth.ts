@@ -20,3 +20,12 @@ export async function login(payload: LoginPayload) {
     device_id: payload.deviceId,
   })
 }
+
+export interface ChangePasswordPayload {
+  old_password: string
+  new_password: string
+}
+
+export async function changePassword(payload: ChangePasswordPayload) {
+  return await axiosInstance.post<{ detail: string }>('/auth/change-password/', payload)
+}

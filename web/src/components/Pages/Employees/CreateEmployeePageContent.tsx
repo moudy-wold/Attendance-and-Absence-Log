@@ -14,7 +14,6 @@ import { Button } from '../../Global/Button'
 type AccountType = 'employee' | 'entry'
 
 interface EmployeeForm {
-  username: string
   password: string
   firstName: string
   lastName: string
@@ -24,7 +23,6 @@ interface EmployeeForm {
 }
 
 const initialForm: EmployeeForm = {
-  username: '',
   password: '',
   firstName: '',
   lastName: '',
@@ -33,7 +31,7 @@ const initialForm: EmployeeForm = {
   isRegular: true,
 }
 
-const fieldOrder: (keyof EmployeeForm)[] = ['username', 'password', 'firstName', 'lastName', 'phone']
+const fieldOrder: (keyof EmployeeForm)[] = ['firstName', 'lastName', 'phone', 'password']
 
 export function CreateEmployeePageContent() {
   const { t } = useTranslation()
@@ -52,11 +50,10 @@ export function CreateEmployeePageContent() {
 
   function validate(): Partial<Record<keyof EmployeeForm, string>> {
     const next: Partial<Record<keyof EmployeeForm, string>> = {}
-    if (!form.username.trim()) next.username = t('employees.form.usernameRequired')
-    if (!form.password || form.password.length < 8) next.password = t('employees.form.passwordTooShort')
     if (!form.firstName.trim()) next.firstName = t('employees.form.firstNameRequired')
     if (!form.lastName.trim()) next.lastName = t('employees.form.lastNameRequired')
     if (!form.phone.trim()) next.phone = t('employees.form.phoneRequired')
+    if (form.password && form.password.length < 8) next.password = t('employees.form.passwordTooShort')
     return next
   }
 
@@ -75,8 +72,7 @@ export function CreateEmployeePageContent() {
     setIsSubmitting(true)
     try {
       await registerUser({
-        username: form.username.trim(),
-        password: form.password,
+        password: form.password.trim() || undefined,
         first_name: form.firstName.trim(),
         last_name: form.lastName.trim(),
         phone: form.phone.trim(),
@@ -109,22 +105,6 @@ export function CreateEmployeePageContent() {
           <option value="entry">{t('employees.roleEntry')}</option>
         </SelectField>
 
-        <TextField
-          label={t('employees.form.username')}
-          value={form.username}
-          onChange={handleChange('username')}
-          error={errors.username}
-          autoComplete="off"
-        />
-
-        <PasswordField
-          label={t('employees.form.password')}
-          value={form.password}
-          onChange={handleChange('password')}
-          error={errors.password}
-          autoComplete="new-password"
-        />
-
         <div className="grid grid-cols-2 gap-4">
           <TextField
             label={t('employees.form.firstName')}
@@ -147,6 +127,18 @@ export function CreateEmployeePageContent() {
           error={errors.phone}
           type="tel"
         />
+
+        <div>
+          <PasswordField
+            label={t('employees.form.password')}
+            value={form.password}
+            onChange={handleChange('password')}
+            error={errors.password}
+            autoComplete="new-password"
+            placeholder={t('employees.form.passwordPlaceholder')}
+          />
+          <p className="mt-1.5 text-xs text-neutral-500">{t('employees.form.passwordHint')}</p>
+        </div>
 
         {form.accountType === 'employee' && (
           <Switch

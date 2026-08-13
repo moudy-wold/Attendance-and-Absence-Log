@@ -47,4 +47,17 @@ export default {
     empty: 'Bu ay için henüz devam kaydı yok',
     open: 'Devam ediyor',
   },
+  changePassword: {
+    title: 'Yeni bir şifre belirle',
+    subtitle: 'Bu ilk giriş yapışınız — devam etmek için yeni bir şifre seçin.',
+    oldPassword: 'Mevcut şifre',
+    newPassword: 'Yeni şifre',
+    confirmPassword: 'Yeni şifreyi onayla',
+    oldPasswordRequired: 'Lütfen mevcut şifrenizi girin',
+    tooShort: 'Şifre en az 8 karakter olmalı',
+    numericOnly: 'Şifre yalnızca rakamlardan oluşamaz',
+    mismatch: 'Şifreler eşleşmiyor',
+    submit: 'Şifreyi değiştir',
+    success: 'Şifre değiştirildi',
+  },
 } satisfies typeof en
