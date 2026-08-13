@@ -165,12 +165,12 @@ class MyAttendanceTests(APITestCase):
             user=self.employee, date=last_month, check_in=timezone.now(), check_out=timezone.now()
         )
         response = self.client.get(self.url)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data["count"], 1)
 
     def test_isolated_per_user(self):
         Attendance.objects.create(user=self.other, date=timezone.localdate(), check_in=timezone.now())
         response = self.client.get(self.url)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.data["count"], 0)
 
 
 class EmployeeAdminViewTests(APITestCase):
@@ -184,9 +184,17 @@ class EmployeeAdminViewTests(APITestCase):
 
     def test_list_shows_employees_only(self):
         response = self.client.get("/api/admin/employees/")
-        usernames = [u["username"] for u in response.data]
+        usernames = [u["username"] for u in response.data["results"]]
         self.assertIn("emp1", usernames)
         self.assertNotIn("entry1", usernames)
+
+    def test_list_is_paginated(self):
+        for i in range(15):
+            User.objects.create_user(username=f"bulk{i}", password="x", is_employee=True)
+        response = self.client.get("/api/admin/employees/")
+        self.assertEqual(len(response.data["results"]), 10)
+        self.assertEqual(response.data["count"], 16)
+        self.assertIsNotNone(response.data["next"])
 
     def test_detail_includes_attendance(self):
         Attendance.objects.create(user=self.employee, date=timezone.localdate(), check_in=timezone.now())

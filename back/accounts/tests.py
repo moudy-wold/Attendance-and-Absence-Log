@@ -169,6 +169,26 @@ class LoginDeviceBindingTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_irregular_employee_cannot_login(self):
+        self.employee.is_regular = False
+        self.employee.save()
+        response = self.client.post(
+            self.url,
+            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_irregular_entry_can_still_login(self):
+        self.entry.is_regular = False
+        self.entry.save()
+        response = self.client.post(
+            self.url,
+            {"username": "entry1", "password": "Entry@12345", "device_id": "entryDeviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 class UpdateUserViewTests(APITestCase):
     def setUp(self):

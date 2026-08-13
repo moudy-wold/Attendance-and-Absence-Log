@@ -20,6 +20,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
+        if self.user.is_employee and not self.user.is_regular:
+            raise serializers.ValidationError(
+                {"detail": "This account is not permitted to log in. Contact an administrator."}
+            )
+
         if self.user.is_employee or self.user.is_entry:
             device_id = attrs.get("device_id")
             if not device_id:

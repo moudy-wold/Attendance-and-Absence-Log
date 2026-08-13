@@ -8,9 +8,11 @@ from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from openpyxl import Workbook
+from rest_framework import filters as drf_filters
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -198,6 +200,22 @@ class EmployeeListView(generics.ListAPIView):
     queryset = User.objects.filter(is_employee=True).order_by("username")
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter]
+    filterset_fields = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "phone",
+        "is_admin",
+        "is_entry",
+        "is_employee",
+        "is_regular",
+        "is_active",
+        "is_first_login",
+        "device_id",
+    ]
+    search_fields = ["first_name", "last_name", "username", "phone"]
 
 
 class EmployeeDetailView(APIView):

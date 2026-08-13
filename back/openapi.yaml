@@ -31,6 +31,67 @@ paths:
   /api/admin/employees/:
     get:
       operationId: admin_employees_list
+      parameters:
+      - in: query
+        name: device_id
+        schema:
+          type: string
+      - in: query
+        name: email
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_admin
+        schema:
+          type: boolean
+      - in: query
+        name: is_employee
+        schema:
+          type: boolean
+      - in: query
+        name: is_entry
+        schema:
+          type: boolean
+      - in: query
+        name: is_first_login
+        schema:
+          type: boolean
+      - in: query
+        name: is_regular
+        schema:
+          type: boolean
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: phone
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: username
+        schema:
+          type: string
       tags:
       - admin
       security:
@@ -40,9 +101,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/PaginatedUserList'
           description: ''
   /api/admin/employees/{id}/:
     get:
@@ -117,6 +176,13 @@ paths:
   /api/attendance/my/:
     get:
       operationId: attendance_my_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
       tags:
       - attendance
       security:
@@ -126,9 +192,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Attendance'
+                $ref: '#/components/schemas/PaginatedAttendanceList'
           description: ''
   /api/attendance/record/:
     post:
@@ -654,6 +718,52 @@ components:
           type: string
       required:
       - detail
+    PaginatedAttendanceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attendance'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
     PatchedSystemSettings:
       type: object
       properties:
