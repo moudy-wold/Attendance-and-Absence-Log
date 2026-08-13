@@ -20,13 +20,13 @@ class GenerateQRTokenTests(APITestCase):
 
     def test_entry_can_generate(self):
         self.client.force_authenticate(self.entry)
-        response = self.client.post(self.url, {"action": "check_in"}, format="json")
+        response = self.client.post(self.url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("token", response.data)
 
     def test_employee_cannot_generate(self):
         self.client.force_authenticate(self.employee)
-        response = self.client.post(self.url, {"action": "check_in"}, format="json")
+        response = self.client.post(self.url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_uses_system_settings_lifetime(self):
@@ -35,7 +35,7 @@ class GenerateQRTokenTests(APITestCase):
         settings_obj.save()
 
         self.client.force_authenticate(self.entry)
-        response = self.client.post(self.url, {"action": "check_in"}, format="json")
+        response = self.client.post(self.url, {}, format="json")
         token = QRToken.objects.get(token=response.data["token"])
         delta = (token.expires_at - token.created_at).total_seconds()
         self.assertAlmostEqual(delta, 30, delta=1)
@@ -53,15 +53,21 @@ class ValidateQRTests(APITestCase):
         return QRToken.objects.create(
             token="tok123",
             generated_by=self.entry,
-            action=QRToken.Action.CHECK_IN,
             expires_at=timezone.now() + (timedelta(seconds=-1) if expired else timedelta(seconds=15)),
         )
 
-    def test_valid_token(self):
+    def test_predicts_check_in_when_no_open_session(self):
         self._make_token()
         response = self.client.post(self.url, {"token": "tok123"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["valid"])
+        self.assertEqual(response.data["action"], "check_in")
+
+    def test_predicts_check_out_when_open_session_exists(self):
+        Attendance.objects.create(user=self.employee, date=timezone.localdate(), check_in=timezone.now())
+        self._make_token()
+        response = self.client.post(self.url, {"token": "tok123"}, format="json")
+        self.assertEqual(response.data["action"], "check_out")
 
     def test_nonexistent_token(self):
         response = self.client.post(self.url, {"token": "nope"}, format="json")
@@ -80,58 +86,36 @@ class RecordAttendanceTests(APITestCase):
         self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
         self.employee = User.objects.create_user(username="emp1", password="x", is_employee=True)
         self.client.force_authenticate(self.employee)
+        # يُعطَّل الحد الأدنى الزمني هنا لعزل اختبار منطق الحالة عن اختبار الفجوة الزمنية (له اختبار مخصص أدناه)
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.min_session_duration_seconds = 0
+        settings_obj.save()
 
-    def _token(self, action):
+    def _token(self):
         return QRToken.objects.create(
-            token=f"tok-{action}-{timezone.now().timestamp()}",
+            token=f"tok-{timezone.now().timestamp()}",
             generated_by=self.entry,
-            action=action,
             expires_at=timezone.now() + timedelta(seconds=15),
         )
 
-    def test_check_out_before_check_in_rejected(self):
-        token = self._token(QRToken.Action.CHECK_OUT)
-        response = self.client.post(self.url, {"token": token.token}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_check_in_success(self):
-        token = self._token(QRToken.Action.CHECK_IN)
-        response = self.client.post(self.url, {"token": token.token}, format="json")
+    def test_first_scan_checks_in(self):
+        response = self.client.post(self.url, {"token": self._token().token}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["check_in"])
         self.assertIsNone(response.data["check_out"])
 
-    def test_duplicate_check_in_rejected(self):
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json")
-        response = self.client.post(
-            self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_check_out_closes_session(self):
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json")
-        response = self.client.post(
-            self.url, {"token": self._token(QRToken.Action.CHECK_OUT).token}, format="json"
-        )
+    def test_second_scan_checks_out(self):
+        self.client.post(self.url, {"token": self._token().token}, format="json")
+        response = self.client.post(self.url, {"token": self._token().token}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["check_out"])
 
-    def test_duplicate_check_out_rejected(self):
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json")
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_OUT).token}, format="json")
-        response = self.client.post(
-            self.url, {"token": self._token(QRToken.Action.CHECK_OUT).token}, format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_multiple_sessions_same_day_allowed(self):
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json")
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_OUT).token}, format="json")
-        self.client.post(self.url, {"token": self._token(QRToken.Action.CHECK_IN).token}, format="json")
-        response = self.client.post(
-            self.url, {"token": self._token(QRToken.Action.CHECK_OUT).token}, format="json"
-        )
+    def test_third_scan_same_day_opens_new_session(self):
+        self.client.post(self.url, {"token": self._token().token}, format="json")  # check-in
+        self.client.post(self.url, {"token": self._token().token}, format="json")  # check-out
+        response = self.client.post(self.url, {"token": self._token().token}, format="json")  # check-in again
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["check_out"])
         self.assertEqual(
             Attendance.objects.filter(user=self.employee, date=timezone.localdate()).count(), 2
         )
@@ -146,9 +130,46 @@ class RecordAttendanceTests(APITestCase):
 
     def test_entry_role_cannot_record(self):
         self.client.force_authenticate(self.entry)
-        token = self._token(QRToken.Action.CHECK_IN)
+        token = self._token()
         response = self.client.post(self.url, {"token": token.token}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class MinSessionDurationTests(APITestCase):
+    """يتحقق من الفجوة الزمنية الدنيا التي تمنع مسح واحد سريع يسجّل دخولًا وخروجًا فوريين."""
+
+    url = "/api/attendance/record/"
+
+    def setUp(self):
+        self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
+        self.employee = User.objects.create_user(username="emp1", password="x", is_employee=True)
+        self.client.force_authenticate(self.employee)
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.min_session_duration_seconds = 300
+        settings_obj.save()
+
+    def _token(self):
+        return QRToken.objects.create(
+            token=f"tok-{timezone.now().timestamp()}",
+            generated_by=self.entry,
+            expires_at=timezone.now() + timedelta(seconds=15),
+        )
+
+    def test_checkout_rejected_before_minimum_duration(self):
+        self.client.post(self.url, {"token": self._token().token}, format="json")
+        response = self.client.post(self.url, {"token": self._token().token}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("wait", response.data["detail"].lower())
+
+    def test_checkout_allowed_after_minimum_duration(self):
+        self.client.post(self.url, {"token": self._token().token}, format="json")
+        attendance = Attendance.objects.get(user=self.employee, date=timezone.localdate())
+        attendance.check_in = timezone.now() - timedelta(seconds=301)
+        attendance.save()
+
+        response = self.client.post(self.url, {"token": self._token().token}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data["check_out"])
 
 
 class MyAttendanceTests(APITestCase):
@@ -184,12 +205,6 @@ class EmployeeAdminViewTests(APITestCase):
         self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
         self.client.force_authenticate(self.admin)
 
-    def test_list_shows_all_users(self):
-        response = self.client.get("/api/admin/employees/")
-        usernames = [u["username"] for u in response.data["results"]]
-        self.assertIn("emp1", usernames)
-        self.assertIn("entry1", usernames)
-
     def test_list_filter_by_is_employee(self):
         response = self.client.get("/api/admin/employees/", {"is_employee": "true"})
         usernames = [u["username"] for u in response.data["results"]]
@@ -217,6 +232,32 @@ class EmployeeAdminViewTests(APITestCase):
     def test_non_admin_forbidden(self):
         self.client.force_authenticate(self.employee)
         response = self.client.get("/api/admin/employees/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class EntryUserListViewTests(APITestCase):
+    url = "/api/admin/entry-users/"
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username="admin", password="x", is_admin=True)
+        self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
+        self.employee = User.objects.create_user(username="emp1", password="x", is_employee=True)
+        self.client.force_authenticate(self.admin)
+
+    def test_list_shows_entry_users_only(self):
+        response = self.client.get(self.url)
+        usernames = [u["username"] for u in response.data["results"]]
+        self.assertIn("entry1", usernames)
+        self.assertNotIn("emp1", usernames)
+
+    def test_search_by_username(self):
+        response = self.client.get(self.url, {"search": "entry1"})
+        usernames = [u["username"] for u in response.data["results"]]
+        self.assertEqual(usernames, ["entry1"])
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.entry)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
@@ -277,6 +318,7 @@ class SystemSettingsTests(APITestCase):
         self.client.force_authenticate(self.admin)
         response = self.client.get(self.url)
         self.assertEqual(response.data["qr_token_lifetime_seconds"], 15)
+        self.assertEqual(response.data["min_session_duration_seconds"], 60)
 
     def test_admin_can_update(self):
         self.client.force_authenticate(self.admin)

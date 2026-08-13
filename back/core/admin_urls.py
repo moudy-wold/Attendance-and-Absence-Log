@@ -4,6 +4,7 @@ from .views import (
     EmployeeDetailView,
     EmployeeExportAttendanceView,
     EmployeeListView,
+    EntryUserListView,
     SystemSettingsView,
 )
 
@@ -15,5 +16,6 @@ urlpatterns = [
         EmployeeExportAttendanceView.as_view(),
         name="employee_attendance_export",
     ),
+    path("entry-users/", EntryUserListView.as_view(), name="entry_user_list"),
     path("settings/", SystemSettingsView.as_view(), name="system_settings"),
 ]

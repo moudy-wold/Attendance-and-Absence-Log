@@ -1,25 +1,22 @@
 from accounts.serializers import UserSerializer
 from rest_framework import serializers
 
-from .models import Attendance, QRToken, SystemSettings
+from .models import Action, Attendance, QRToken, SystemSettings
 
 
 class SystemSettingsSerializer(serializers.ModelSerializer):
     qr_token_lifetime_seconds = serializers.IntegerField(min_value=5, max_value=300)
+    min_session_duration_seconds = serializers.IntegerField(min_value=0, max_value=3600)
 
     class Meta:
         model = SystemSettings
-        fields = ["qr_token_lifetime_seconds"]
-
-
-class GenerateQRTokenSerializer(serializers.Serializer):
-    action = serializers.ChoiceField(choices=QRToken.Action.choices)
+        fields = ["qr_token_lifetime_seconds", "min_session_duration_seconds"]
 
 
 class QRTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = QRToken
-        fields = ["token", "action", "created_at", "expires_at", "is_active"]
+        fields = ["token", "created_at", "expires_at", "is_active"]
 
 
 class QRTokenInputSerializer(serializers.Serializer):
@@ -38,7 +35,7 @@ class QRTokenInputSerializer(serializers.Serializer):
 
 class ValidateQRResponseSerializer(serializers.Serializer):
     valid = serializers.BooleanField()
-    action = serializers.ChoiceField(choices=QRToken.Action.choices)
+    action = serializers.ChoiceField(choices=Action.choices)
 
 
 class YearMonthQuerySerializer(serializers.Serializer):

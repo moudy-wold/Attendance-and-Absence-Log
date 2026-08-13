@@ -17,11 +17,10 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Attendance, QRToken, SystemSettings
+from .models import Action, Attendance, QRToken, SystemSettings
 from .serializers import (
     AttendanceSerializer,
     EmployeeAttendanceSerializer,
-    GenerateQRTokenSerializer,
     QRTokenInputSerializer,
     QRTokenSerializer,
     SystemSettingsSerializer,
@@ -46,18 +45,16 @@ YEAR_MONTH_PARAMETERS = [
 
 
 class GenerateQRTokenView(APIView):
+    """يولّد رمز QR عامًا — لا يحمل نوع إجراء، يُحدَّد ذلك تلقائيًا وقت المسح حسب حالة كل موظف."""
+
     permission_classes = [IsEntryUser]
 
-    @extend_schema(request=GenerateQRTokenSerializer, responses={201: QRTokenSerializer})
+    @extend_schema(request=None, responses={201: QRTokenSerializer})
     def post(self, request):
-        serializer = GenerateQRTokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         lifetime_seconds = SystemSettings.get_solo().qr_token_lifetime_seconds
         qr_token = QRToken.objects.create(
             token=secrets.token_urlsafe(24),
             generated_by=request.user,
-            action=serializer.validated_data["action"],
             expires_at=timezone.now() + timedelta(seconds=lifetime_seconds),
         )
         return Response(
@@ -65,8 +62,14 @@ class GenerateQRTokenView(APIView):
         )
 
 
+def _has_open_session(user) -> bool:
+    return Attendance.objects.filter(
+        user=user, date=timezone.localdate(), check_out__isnull=True
+    ).exists()
+
+
 class ValidateQRView(APIView):
-    """يتحقق فقط من أن الرمز موجود وسارٍ، بدون أي أثر جانبي — يُستدعى قبل طلب البصمة."""
+    """يتحقق من أن الرمز سارٍ، ويتوقّع الإجراء (دخول/خروج) حسب حالة الموظف الحالي — بدون أي أثر جانبي."""
 
     permission_classes = [IsEmployeeUser]
 
@@ -74,9 +77,9 @@ class ValidateQRView(APIView):
     def post(self, request):
         serializer = QRTokenInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        qr_token = serializer.validated_data["token"]
 
-        return Response({"valid": True, "action": qr_token.action})
+        action = Action.CHECK_OUT if _has_open_session(request.user) else Action.CHECK_IN
+        return Response({"valid": True, "action": action})
 
 
 def _check_in(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
@@ -95,7 +98,8 @@ def _check_in(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
 
 
 def _check_out(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
-    """يغلق آخر جلسة مفتوحة لهذا الموظف اليوم. select_for_update تمنع إغلاق نفس الجلسة مرتين بالتزامن."""
+    """يغلق آخر جلسة مفتوحة لهذا الموظف اليوم، بشرط مرور الحد الأدنى الزمني منذ الدخول.
+    select_for_update تمنع إغلاق نفس الجلسة مرتين بالتزامن."""
     with transaction.atomic():
         attendance = (
             Attendance.objects.select_for_update()
@@ -105,6 +109,12 @@ def _check_out(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
         if attendance is None:
             return None, "Cannot check out before checking in."
 
+        min_seconds = SystemSettings.get_solo().min_session_duration_seconds
+        elapsed = (timezone.now() - attendance.check_in).total_seconds()
+        if elapsed < min_seconds:
+            remaining = int(min_seconds - elapsed)
+            return None, f"Please wait {remaining} more second(s) before checking out."
+
         attendance.check_out = timezone.now()
         attendance.qr_token = qr_token
         attendance.save()
@@ -112,7 +122,8 @@ def _check_out(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
 
 
 class RecordAttendanceView(APIView):
-    """يحفظ الحضور/الانصراف فعليًا — يُستدعى بعد نجاح البصمة محليًا فقط."""
+    """يحفظ الحضور/الانصراف فعليًا — يُستدعى بعد نجاح البصمة محليًا فقط.
+    الإجراء (دخول/خروج) يُحدَّد تلقائيًا حسب وجود جلسة مفتوحة للموظف أم لا."""
 
     permission_classes = [IsEmployeeUser]
 
@@ -122,10 +133,10 @@ class RecordAttendanceView(APIView):
         serializer.is_valid(raise_exception=True)
         qr_token = serializer.validated_data["token"]
 
-        if qr_token.action == QRToken.Action.CHECK_IN:
-            attendance, error = _check_in(request.user, qr_token)
-        else:
+        if _has_open_session(request.user):
             attendance, error = _check_out(request.user, qr_token)
+        else:
+            attendance, error = _check_in(request.user, qr_token)
 
         if error:
             return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
@@ -185,26 +196,39 @@ class EmployeeExportAttendanceView(APIView):
         return response
 
 
+USER_FILTERSET_FIELDS = [
+    "username",
+    "email",
+    "first_name",
+    "last_name",
+    "phone",
+    "is_admin",
+    "is_entry",
+    "is_employee",
+    "is_regular",
+    "is_active",
+    "is_first_login",
+    "device_id",
+]
+USER_SEARCH_FIELDS = ["first_name", "last_name", "username", "phone"]
+
+
 class EmployeeListView(generics.ListAPIView):
     queryset = User.objects.filter(is_employee=True).order_by("username")
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter]
-    filterset_fields = [
-        "username",
-        "email",
-        "first_name",
-        "last_name",
-        "phone",
-        "is_admin",
-        "is_entry",
-        "is_employee",
-        "is_regular",
-        "is_active",
-        "is_first_login",
-        "device_id",
-    ]
-    search_fields = ["first_name", "last_name", "username", "phone"]
+    filterset_fields = USER_FILTERSET_FIELDS
+    search_fields = USER_SEARCH_FIELDS
+
+
+class EntryUserListView(generics.ListAPIView):
+    queryset = User.objects.filter(is_entry=True).order_by("username")
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter]
+    filterset_fields = USER_FILTERSET_FIELDS
+    search_fields = USER_SEARCH_FIELDS
 
 
 class EmployeeDetailView(APIView):
@@ -221,6 +245,7 @@ class EmployeeDetailView(APIView):
         data = UserSerializer(employee).data
         data["attendance"] = AttendanceSerializer(attendance, many=True).data
         return Response(data)
+
 
 
 class SystemSettingsView(APIView):

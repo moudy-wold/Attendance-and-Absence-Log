@@ -137,6 +137,81 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/admin/entry-users/:
+    get:
+      operationId: admin_entry_users_list
+      parameters:
+      - in: query
+        name: device_id
+        schema:
+          type: string
+      - in: query
+        name: email
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_admin
+        schema:
+          type: boolean
+      - in: query
+        name: is_employee
+        schema:
+          type: boolean
+      - in: query
+        name: is_entry
+        schema:
+          type: boolean
+      - in: query
+        name: is_first_login
+        schema:
+          type: boolean
+      - in: query
+        name: is_regular
+        schema:
+          type: boolean
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: phone
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: username
+        schema:
+          type: string
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
   /api/admin/settings/:
     get:
       operationId: admin_settings_retrieve
@@ -203,7 +278,9 @@ paths:
   /api/attendance/record/:
     post:
       operationId: attendance_record_create
-      description: يحفظ الحضور/الانصراف فعليًا — يُستدعى بعد نجاح البصمة محليًا فقط.
+      description: |-
+        يحفظ الحضور/الانصراف فعليًا — يُستدعى بعد نجاح البصمة محليًا فقط.
+        الإجراء (دخول/خروج) يُحدَّد تلقائيًا حسب وجود جلسة مفتوحة للموظف أم لا.
       tags:
       - attendance
       requestBody:
@@ -397,20 +474,10 @@ paths:
   /api/qr/generate/:
     post:
       operationId: qr_generate_create
+      description: يولّد رمز QR عامًا — لا يحمل نوع إجراء، يُحدَّد ذلك تلقائيًا وقت
+        المسح حسب حالة كل موظف.
       tags:
       - qr
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenerateQRToken'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/GenerateQRToken'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/GenerateQRToken'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -423,8 +490,8 @@ paths:
   /api/qr/validate/:
     post:
       operationId: qr_validate_create
-      description: يتحقق فقط من أن الرمز موجود وسارٍ، بدون أي أثر جانبي — يُستدعى
-        قبل طلب البصمة.
+      description: يتحقق من أن الرمز سارٍ، ويتوقّع الإجراء (دخول/خروج) حسب حالة الموظف
+        الحالي — بدون أي أثر جانبي.
       tags:
       - qr
       requestBody:
@@ -710,13 +777,6 @@ components:
       - attendance
       - id
       - username
-    GenerateQRToken:
-      type: object
-      properties:
-        action:
-          $ref: '#/components/schemas/ActionEnum'
-      required:
-      - action
     MessageResponse:
       type: object
       properties:
@@ -777,6 +837,10 @@ components:
           type: integer
           maximum: 300
           minimum: 5
+        min_session_duration_seconds:
+          type: integer
+          maximum: 3600
+          minimum: 0
     PatchedUpdateUser:
       type: object
       properties:
@@ -825,8 +889,6 @@ components:
         token:
           type: string
           maxLength: 64
-        action:
-          $ref: '#/components/schemas/ActionEnum'
         created_at:
           type: string
           format: date-time
@@ -837,7 +899,6 @@ components:
         is_active:
           type: boolean
       required:
-      - action
       - created_at
       - expires_at
       - token
@@ -892,7 +953,12 @@ components:
           type: integer
           maximum: 300
           minimum: 5
+        min_session_duration_seconds:
+          type: integer
+          maximum: 3600
+          minimum: 0
       required:
+      - min_session_duration_seconds
       - qr_token_lifetime_seconds
     TokenRefresh:
       type: object

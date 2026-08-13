@@ -3,12 +3,23 @@ from django.db import models
 from django.utils import timezone
 
 
+class Action(models.TextChoices):
+    """نوع حدث الحضور، محسوب تلقائيًا من حالة الموظف — لا يُخزَّن على QRToken."""
+
+    CHECK_IN = "check_in", "Check In"
+    CHECK_OUT = "check_out", "Check Out"
+
+
 class SystemSettings(models.Model):
     """صف وحيد (Singleton) يحمل إعدادات النظام القابلة للتعديل من الأدمن أثناء التشغيل."""
 
     qr_token_lifetime_seconds = models.PositiveIntegerField(
         default=15,
         help_text="مدة صلاحية رمز QR بالثواني — نفس المدة تُستخدم كفاصل التحديث التلقائي في شاشة الدخول",
+    )
+    min_session_duration_seconds = models.PositiveIntegerField(
+        default=60,
+        help_text="أقل مدة مسموحة بين تسجيل الدخول والخروج لنفس الجلسة — يمنع تسجيل خروج فوري بعد الدخول مباشرة",
     )
 
     class Meta:
@@ -29,15 +40,10 @@ class SystemSettings(models.Model):
 
 
 class QRToken(models.Model):
-    class Action(models.TextChoices):
-        CHECK_IN = "check_in", "Check In"
-        CHECK_OUT = "check_out", "Check Out"
-
     token = models.CharField(max_length=64, unique=True)
     generated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="generated_tokens"
     )
-    action = models.CharField(max_length=10, choices=Action.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_active = models.BooleanField(default=True)
@@ -46,7 +52,7 @@ class QRToken(models.Model):
         return self.is_active and timezone.now() <= self.expires_at
 
     def __str__(self):
-        return f"{self.token} ({self.action})"
+        return self.token
 
 
 class Attendance(models.Model):
