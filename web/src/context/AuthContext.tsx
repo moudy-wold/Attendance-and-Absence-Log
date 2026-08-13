@@ -26,8 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       async login(payload: LoginPayload) {
         const { data } = await loginRequest({ ...payload, deviceId: getDeviceId() })
-        tokenService.setTokens(data.access, data.refresh)
         const mappedUser = mapUser(data.user)
+
+        // Tokens are stored either way so a first-login user's change-password
+        // call is authorized, but the session itself isn't committed (no user
+        // state, no isAuthenticated) until they've changed their password and
+        // logged in again with it.
+        tokenService.setTokens(data.access, data.refresh)
+        if (mappedUser.isFirstLogin) return mappedUser
+
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mappedUser))
         setUser(mappedUser)
         return mappedUser

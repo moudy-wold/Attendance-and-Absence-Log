@@ -1,17 +1,11 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/authContextValue'
-import { ForcedChangePasswordModal } from './ForcedChangePasswordModal'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  return (
-    <>
-      {children}
-      {user?.isFirstLogin && <ForcedChangePasswordModal />}
-    </>
-  )
+  return children
 }
 
 export function RequireGuest({ children }: { children: ReactNode }) {

@@ -9,6 +9,7 @@ import { TextField } from '../../Global/TextField'
 import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
 import { LanguageSwitcher } from '../../Global/LanguageSwitcher'
+import { ForcedChangePasswordModal } from '../../Global/ForcedChangePasswordModal'
 import { useAuth } from '../../../context/authContextValue'
 import { extractApiError } from '../../../lib/apiError'
 import { tw } from '../../../lib/tw'
@@ -18,16 +19,18 @@ interface LoginForm {
   password: string
 }
 
+const initialForm: LoginForm = { username: '', password: '' }
 const fieldOrder: (keyof LoginForm)[] = ['username', 'password']
 
 export function LoginScreenContent() {
   const { t } = useTranslation()
-  const { login } = useAuth()
+  const { login, logout } = useAuth()
   const passwordRef = useRef<any>(null)
-  const [form, setForm] = useState<LoginForm>({ username: '', password: '' })
+  const [form, setForm] = useState<LoginForm>(initialForm)
   const [errors, setErrors] = useState<Partial<Record<keyof LoginForm, string>>>({})
   const [topError, setTopError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
 
   function handleChange(field: keyof LoginForm) {
     return (value: string) => {
@@ -57,10 +60,13 @@ export function LoginScreenContent() {
     setIsSubmitting(true)
     setTopError(null)
     try {
-      await login(form)
+      const loggedInUser = await login(form)
+      if (loggedInUser.isFirstLogin) {
+        setMustChangePassword(true)
+        return
+      }
       router.replace('/')
-    } catch (error: any) {
-      console.log('Login error:', error?.response?.data)
+    } catch (error) {
       const message =
         isAxiosError(error) && error.response?.status === 401
           ? t('auth.invalidCredentials')
@@ -70,6 +76,19 @@ export function LoginScreenContent() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function handlePasswordChanged() {
+    // Discard the temporary session from the first login — they must sign in
+    // again with the new password, they never actually entered the app.
+    logout()
+    setMustChangePassword(false)
+    setForm(initialForm)
+    Toast.show({ type: 'success', text1: t('changePassword.pleaseSignInAgain') })
+  }
+
+  if (mustChangePassword) {
+    return <ForcedChangePasswordModal currentPassword={form.password} onSuccess={handlePasswordChanged} />
   }
 
   return (

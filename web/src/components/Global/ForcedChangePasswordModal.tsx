@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { changePassword } from '../../api/auth'
 import { extractApiError } from '../../lib/apiError'
-import { useAuth } from '../../context/authContextValue'
 import { PasswordField } from './PasswordField'
 import { Button } from './Button'
 
@@ -16,11 +15,16 @@ interface Form {
 const initialForm: Form = { oldPassword: '', newPassword: '', confirmPassword: '' }
 const fieldOrder: (keyof Form)[] = ['oldPassword', 'newPassword', 'confirmPassword']
 
-export function ForcedChangePasswordModal() {
-  const { t } = useTranslation()
-  const { updateUser } = useAuth()
+interface ForcedChangePasswordModalProps {
+  /** The password just used to log in — prefilled and locked, since we already know it. */
+  currentPassword?: string
+  onSuccess: () => void
+}
 
-  const [form, setForm] = useState<Form>(initialForm)
+export function ForcedChangePasswordModal({ currentPassword, onSuccess }: ForcedChangePasswordModalProps) {
+  const { t } = useTranslation()
+
+  const [form, setForm] = useState<Form>({ ...initialForm, oldPassword: currentPassword ?? '' })
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -54,8 +58,8 @@ export function ForcedChangePasswordModal() {
     setIsSubmitting(true)
     try {
       await changePassword({ old_password: form.oldPassword, new_password: form.newPassword })
-      updateUser({ isFirstLogin: false })
       toast.success(t('changePassword.success'))
+      onSuccess()
     } catch (error) {
       toast.error(extractApiError(error, t('common.unexpectedError')))
     } finally {
@@ -64,42 +68,41 @@ export function ForcedChangePasswordModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
-      >
-        <div>
-          <h2 className="text-lg font-semibold text-neutral-900">{t('changePassword.title')}</h2>
-          <p className="mt-1 text-sm text-neutral-500">{t('changePassword.subtitle')}</p>
-        </div>
+    <form
+      onSubmit={handleSubmit}
+      className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
+    >
+      <div>
+        <h2 className="text-lg font-semibold text-neutral-900">{t('changePassword.title')}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t('changePassword.subtitle')}</p>
+      </div>
 
-        <PasswordField
-          label={t('changePassword.oldPassword')}
-          value={form.oldPassword}
-          onChange={handleChange('oldPassword')}
-          error={errors.oldPassword}
-          autoComplete="current-password"
-        />
-        <PasswordField
-          label={t('changePassword.newPassword')}
-          value={form.newPassword}
-          onChange={handleChange('newPassword')}
-          error={errors.newPassword}
-          autoComplete="new-password"
-        />
-        <PasswordField
-          label={t('changePassword.confirmPassword')}
-          value={form.confirmPassword}
-          onChange={handleChange('confirmPassword')}
-          error={errors.confirmPassword}
-          autoComplete="new-password"
-        />
+      <PasswordField
+        label={t('changePassword.oldPassword')}
+        value={form.oldPassword}
+        onChange={handleChange('oldPassword')}
+        error={errors.oldPassword}
+        autoComplete="current-password"
+        readOnly={Boolean(currentPassword)}
+      />
+      <PasswordField
+        label={t('changePassword.newPassword')}
+        value={form.newPassword}
+        onChange={handleChange('newPassword')}
+        error={errors.newPassword}
+        autoComplete="new-password"
+      />
+      <PasswordField
+        label={t('changePassword.confirmPassword')}
+        value={form.confirmPassword}
+        onChange={handleChange('confirmPassword')}
+        error={errors.confirmPassword}
+        autoComplete="new-password"
+      />
 
-        <Button type="submit" loading={isSubmitting} className="mt-2">
-          {t('changePassword.submit')}
-        </Button>
-      </form>
-    </div>
+      <Button type="submit" loading={isSubmitting} className="mt-2">
+        {t('changePassword.submit')}
+      </Button>
+    </form>
   )
 }
