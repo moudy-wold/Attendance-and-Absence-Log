@@ -1,8 +1,10 @@
 from datetime import timedelta
+from io import BytesIO
 
 from accounts.models import User
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from openpyxl import load_workbook
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -182,8 +184,14 @@ class EmployeeAdminViewTests(APITestCase):
         self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
         self.client.force_authenticate(self.admin)
 
-    def test_list_shows_employees_only(self):
+    def test_list_shows_all_users(self):
         response = self.client.get("/api/admin/employees/")
+        usernames = [u["username"] for u in response.data["results"]]
+        self.assertIn("emp1", usernames)
+        self.assertIn("entry1", usernames)
+
+    def test_list_filter_by_is_employee(self):
+        response = self.client.get("/api/admin/employees/", {"is_employee": "true"})
         usernames = [u["username"] for u in response.data["results"]]
         self.assertIn("emp1", usernames)
         self.assertNotIn("entry1", usernames)
@@ -191,7 +199,7 @@ class EmployeeAdminViewTests(APITestCase):
     def test_list_is_paginated(self):
         for i in range(15):
             User.objects.create_user(username=f"bulk{i}", password="x", is_employee=True)
-        response = self.client.get("/api/admin/employees/")
+        response = self.client.get("/api/admin/employees/", {"is_employee": "true"})
         self.assertEqual(len(response.data["results"]), 10)
         self.assertEqual(response.data["count"], 16)
         self.assertIsNotNone(response.data["next"])
@@ -212,12 +220,13 @@ class EmployeeAdminViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class ExportAttendanceTests(APITestCase):
-    url = "/api/admin/attendance/export/"
-
+class EmployeeExportAttendanceTests(APITestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(username="admin", password="x", is_admin=True)
+        self.employee = User.objects.create_user(username="emp1", password="x", is_employee=True)
+        self.entry = User.objects.create_user(username="entry1", password="x", is_entry=True)
         self.client.force_authenticate(self.admin)
+        self.url = f"/api/admin/employees/{self.employee.pk}/export/"
 
     def test_export_succeeds(self):
         response = self.client.get(self.url)
@@ -226,6 +235,27 @@ class ExportAttendanceTests(APITestCase):
             response["Content-Type"],
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
+    def test_export_only_contains_this_employee(self):
+        other = User.objects.create_user(username="emp2", password="x", is_employee=True)
+        Attendance.objects.create(user=self.employee, date=timezone.localdate(), check_in=timezone.now())
+        Attendance.objects.create(user=other, date=timezone.localdate(), check_in=timezone.now())
+
+        response = self.client.get(self.url)
+        workbook = load_workbook(BytesIO(response.content))
+        sheet = workbook.active
+        rows = list(sheet.iter_rows(values_only=True))
+        self.assertEqual(rows[0], ("التاريخ", "وقت الحضور", "وقت الانصراف"))
+        self.assertEqual(len(rows), 2)
+
+    def test_404_for_non_employee(self):
+        response = self.client.get(f"/api/admin/employees/{self.entry.pk}/export/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.employee)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_invalid_year_returns_400_not_500(self):
         response = self.client.get(self.url, {"year": "abc"})

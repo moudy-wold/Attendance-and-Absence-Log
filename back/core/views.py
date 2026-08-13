@@ -143,39 +143,28 @@ class MyAttendanceView(generics.ListAPIView):
         )
 
 
-class ExportAttendanceView(APIView):
+class EmployeeExportAttendanceView(APIView):
+    """يصدّر تقرير إكسل شهري لموظف واحد محدَّد بمعرّفه."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: OpenApiTypes.BINARY})
-    def get(self, request):
+    def get(self, request, pk):
+        employee = get_object_or_404(User, pk=pk, is_employee=True)
         year, month = _resolve_year_month(request)
 
-        records = (
-            Attendance.objects.filter(
-                date__year=year, date__month=month, user__is_employee=True
-            )
-            .select_related("user")
-            .order_by("user__username", "date")
-        )
+        records = Attendance.objects.filter(
+            user=employee, date__year=year, date__month=month
+        ).order_by("date")
 
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = f"{year}-{month:02d}"
-        sheet.append(
-            [
-                "اسم الموظف",
-                "اسم المستخدم",
-                "التاريخ",
-                "وقت الحضور",
-                "وقت الانصراف",
-            ]
-        )
+        sheet.append(["التاريخ", "وقت الحضور", "وقت الانصراف"])
 
         for record in records:
             sheet.append(
                 [
-                    f"{record.user.first_name} {record.user.last_name}".strip(),
-                    record.user.username,
                     record.date.isoformat(),
                     timezone.localtime(record.check_in).strftime("%H:%M:%S")
                     if record.check_in
@@ -190,7 +179,7 @@ class ExportAttendanceView(APIView):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         response["Content-Disposition"] = (
-            f"attachment; filename=attendance_{year}_{month:02d}.xlsx"
+            f"attachment; filename=attendance_{employee.username}_{year}_{month:02d}.xlsx"
         )
         workbook.save(response)
         return response
