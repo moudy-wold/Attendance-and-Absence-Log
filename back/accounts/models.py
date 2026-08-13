@@ -17,10 +17,9 @@ class User(AbstractUser):
         blank=True,
         help_text="معرّف الجهاز المرتبط بالحساب — يُضبط تلقائيًا أول استخدام",
     )
-
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}".strip() or self.username
+    is_first_login = models.BooleanField(
+        default=True, help_text="يصبح False بعد أول تغيير لكلمة المرور"
+    )
 
     def __str__(self):
-        return self.full_name
+        return self.username

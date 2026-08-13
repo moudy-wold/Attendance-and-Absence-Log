@@ -70,8 +70,6 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
 }
 
-QR_TOKEN_LIFETIME_SECONDS = 15
-
 # Dev-only: allow the local Vite dev server (web admin dashboard) to call this API.
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",

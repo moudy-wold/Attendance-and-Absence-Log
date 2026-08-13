@@ -4,7 +4,6 @@ from datetime import timedelta
 from accounts.models import User
 from accounts.permissions import IsAdminUser, IsEmployeeUser, IsEntryUser
 from accounts.serializers import UserSerializer
-from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -16,13 +15,14 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Attendance, QRToken
+from .models import Attendance, QRToken, SystemSettings
 from .serializers import (
     AttendanceSerializer,
     EmployeeAttendanceSerializer,
     GenerateQRTokenSerializer,
     QRTokenInputSerializer,
     QRTokenSerializer,
+    SystemSettingsSerializer,
     ValidateQRResponseSerializer,
     YearMonthQuerySerializer,
 )
@@ -51,12 +51,12 @@ class GenerateQRTokenView(APIView):
         serializer = GenerateQRTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        lifetime_seconds = SystemSettings.get_solo().qr_token_lifetime_seconds
         qr_token = QRToken.objects.create(
             token=secrets.token_urlsafe(24),
             generated_by=request.user,
             action=serializer.validated_data["action"],
-            expires_at=timezone.now()
-            + timedelta(seconds=settings.QR_TOKEN_LIFETIME_SECONDS),
+            expires_at=timezone.now() + timedelta(seconds=lifetime_seconds),
         )
         return Response(
             QRTokenSerializer(qr_token).data, status=status.HTTP_201_CREATED
@@ -172,7 +172,7 @@ class ExportAttendanceView(APIView):
         for record in records:
             sheet.append(
                 [
-                    record.user.full_name,
+                    f"{record.user.first_name} {record.user.last_name}".strip(),
                     record.user.username,
                     record.date.isoformat(),
                     timezone.localtime(record.check_in).strftime("%H:%M:%S")
@@ -214,3 +214,22 @@ class EmployeeDetailView(APIView):
         data = UserSerializer(employee).data
         data["attendance"] = AttendanceSerializer(attendance, many=True).data
         return Response(data)
+
+
+class SystemSettingsView(APIView):
+    """يدير الأدمن منها مدة صلاحية رمز QR — نفس المدة تُستخدم كفاصل التحديث التلقائي بالفرونت."""
+
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(responses={200: SystemSettingsSerializer})
+    def get(self, request):
+        return Response(SystemSettingsSerializer(SystemSettings.get_solo()).data)
+
+    @extend_schema(request=SystemSettingsSerializer, responses={200: SystemSettingsSerializer})
+    def patch(self, request):
+        serializer = SystemSettingsSerializer(
+            SystemSettings.get_solo(), data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

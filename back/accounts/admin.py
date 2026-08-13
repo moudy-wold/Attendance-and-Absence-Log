@@ -8,7 +8,6 @@ from .models import User
 class CustomUserAdmin(UserAdmin):
     list_display = (
         "username",
-        "full_name",
         "email",
         "is_admin",
         "is_entry",

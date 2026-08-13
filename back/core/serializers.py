@@ -1,7 +1,15 @@
 from accounts.serializers import UserSerializer
 from rest_framework import serializers
 
-from .models import Attendance, QRToken
+from .models import Attendance, QRToken, SystemSettings
+
+
+class SystemSettingsSerializer(serializers.ModelSerializer):
+    qr_token_lifetime_seconds = serializers.IntegerField(min_value=5, max_value=300)
+
+    class Meta:
+        model = SystemSettings
+        fields = ["qr_token_lifetime_seconds"]
 
 
 class GenerateQRTokenSerializer(serializers.Serializer):

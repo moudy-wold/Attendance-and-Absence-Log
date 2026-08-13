@@ -1,6 +1,17 @@
 from django.contrib import admin
 
-from .models import Attendance, QRToken
+from .models import Attendance, QRToken, SystemSettings
+
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ("qr_token_lifetime_seconds",)
+
+    def has_add_permission(self, request):
+        return not SystemSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(QRToken)

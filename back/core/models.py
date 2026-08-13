@@ -3,6 +3,31 @@ from django.db import models
 from django.utils import timezone
 
 
+class SystemSettings(models.Model):
+    """صف وحيد (Singleton) يحمل إعدادات النظام القابلة للتعديل من الأدمن أثناء التشغيل."""
+
+    qr_token_lifetime_seconds = models.PositiveIntegerField(
+        default=15,
+        help_text="مدة صلاحية رمز QR بالثواني — نفس المدة تُستخدم كفاصل التحديث التلقائي في شاشة الدخول",
+    )
+
+    class Meta:
+        verbose_name = "System Settings"
+        verbose_name_plural = "System Settings"
+
+    def __str__(self):
+        return "System Settings"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls) -> "SystemSettings":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
 class QRToken(models.Model):
     class Action(models.TextChoices):
         CHECK_IN = "check_in", "Check In"

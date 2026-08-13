@@ -12,7 +12,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token["full_name"] = user.full_name
         token["is_admin"] = user.is_admin
         token["is_entry"] = user.is_entry
         token["is_employee"] = user.is_employee
@@ -50,8 +49,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    full_name = serializers.ReadOnlyField()
-
     class Meta:
         model = User
         fields = [
@@ -60,7 +57,6 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "full_name",
             "phone",
             "is_admin",
             "is_entry",
@@ -68,17 +64,21 @@ class UserSerializer(serializers.ModelSerializer):
             "is_regular",
             "is_active",
             "device_id",
+            "is_first_login",
         ]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, validators=[validate_password]
+    )
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
 
     class Meta:
         model = User
         fields = [
             "id",
-            "username",
             "password",
             "email",
             "first_name",
@@ -91,11 +91,27 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
+        password = validated_data.pop("password", "") or validated_data.get("phone")
+        if not password:
+            raise serializers.ValidationError(
+                {"detail": "Either password or phone is required to create a user."}
+            )
+        username = self._generate_username(
+            validated_data["first_name"], validated_data["last_name"]
+        )
+        user = User(username=username, **validated_data)
         user.set_password(password)
         user.save()
         return user
+
+    @staticmethod
+    def _generate_username(first_name: str, last_name: str) -> str:
+        username = f"{first_name}.{last_name}".strip().lower().replace(" ", "")
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {"detail": "A user with this name already exists."}
+            )
+        return username
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
@@ -112,4 +128,14 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             "is_regular",
             "is_active",
             "device_id",
+            "is_first_login",
         ]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+
+
+class MessageResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
