@@ -59,5 +59,6 @@ export default {
     mismatch: 'كلمتا المرور غير متطابقتين',
     submit: 'تغيير كلمة المرور',
     success: 'تم تغيير كلمة المرور',
+    pleaseSignInAgain: 'تم تغيير كلمة المرور — الرجاء تسجيل الدخول مرة أخرى بكلمة المرور الجديدة.',
   },
 } satisfies typeof en

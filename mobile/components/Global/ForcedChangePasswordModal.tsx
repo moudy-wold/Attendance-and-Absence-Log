@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import Toast from 'react-native-toast-message'
 import { changePassword } from '../../api'
 import { extractApiError } from '../../lib/apiError'
-import { useAuth } from '../../context/authContextValue'
 import { PasswordField } from './PasswordField'
 import { Button } from './Button'
 import { tw } from '../../lib/tw'
@@ -19,11 +18,16 @@ interface Form {
 const initialForm: Form = { oldPassword: '', newPassword: '', confirmPassword: '' }
 const fieldOrder: (keyof Form)[] = ['oldPassword', 'newPassword', 'confirmPassword']
 
-export function ForcedChangePasswordModal() {
-  const { t } = useTranslation()
-  const { updateUser } = useAuth()
+interface ForcedChangePasswordModalProps {
+  /** The password just used to log in — prefilled and locked, since we already know it. */
+  currentPassword?: string
+  onSuccess: () => void
+}
 
-  const [form, setForm] = useState<Form>(initialForm)
+export function ForcedChangePasswordModal({ currentPassword, onSuccess }: ForcedChangePasswordModalProps) {
+  const { t } = useTranslation()
+
+  const [form, setForm] = useState<Form>({ ...initialForm, oldPassword: currentPassword ?? '' })
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -55,8 +59,8 @@ export function ForcedChangePasswordModal() {
     setIsSubmitting(true)
     try {
       await changePassword({ old_password: form.oldPassword, new_password: form.newPassword })
-      updateUser({ isFirstLogin: false })
       Toast.show({ type: 'success', text1: t('changePassword.success') })
+      onSuccess()
     } catch (error) {
       Toast.show({ type: 'error', text1: extractApiError(error, t('common.unexpectedError')) })
     } finally {
@@ -65,47 +69,46 @@ export function ForcedChangePasswordModal() {
   }
 
   return (
-    <View style={tw`absolute inset-0 z-50 items-center justify-center bg-black/60 px-5`}>
-      <KeyboardAwareScrollView
-        style={tw`w-full`}
-        contentContainerStyle={tw`items-center justify-center`}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={20}
+    <KeyboardAwareScrollView
+      style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950`}
+      contentContainerStyle={tw`flex-grow justify-center gap-6 px-5 py-10`}
+      keyboardShouldPersistTaps="handled"
+      bottomOffset={20}
+    >
+      <View
+        style={tw`gap-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900`}
       >
-        <View
-          style={tw`w-full max-w-sm gap-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900`}
-        >
-          <View>
-            <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>
-              {t('changePassword.title')}
-            </Text>
-            <Text style={tw`mt-1 text-sm text-neutral-500`}>{t('changePassword.subtitle')}</Text>
-          </View>
-
-          <PasswordField
-            label={t('changePassword.oldPassword')}
-            value={form.oldPassword}
-            onChangeText={handleChange('oldPassword')}
-            error={errors.oldPassword}
-          />
-          <PasswordField
-            label={t('changePassword.newPassword')}
-            value={form.newPassword}
-            onChangeText={handleChange('newPassword')}
-            error={errors.newPassword}
-          />
-          <PasswordField
-            label={t('changePassword.confirmPassword')}
-            value={form.confirmPassword}
-            onChangeText={handleChange('confirmPassword')}
-            error={errors.confirmPassword}
-          />
-
-          <Button onPress={handleSubmit} loading={isSubmitting}>
-            {t('changePassword.submit')}
-          </Button>
+        <View>
+          <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>
+            {t('changePassword.title')}
+          </Text>
+          <Text style={tw`mt-1 text-sm text-neutral-500`}>{t('changePassword.subtitle')}</Text>
         </View>
-      </KeyboardAwareScrollView>
-    </View>
+
+        <PasswordField
+          label={t('changePassword.oldPassword')}
+          value={form.oldPassword}
+          onChangeText={handleChange('oldPassword')}
+          error={errors.oldPassword}
+          editable={!currentPassword}
+        />
+        <PasswordField
+          label={t('changePassword.newPassword')}
+          value={form.newPassword}
+          onChangeText={handleChange('newPassword')}
+          error={errors.newPassword}
+        />
+        <PasswordField
+          label={t('changePassword.confirmPassword')}
+          value={form.confirmPassword}
+          onChangeText={handleChange('confirmPassword')}
+          error={errors.confirmPassword}
+        />
+
+        <Button onPress={handleSubmit} loading={isSubmitting}>
+          {t('changePassword.submit')}
+        </Button>
+      </View>
+    </KeyboardAwareScrollView>
   )
 }

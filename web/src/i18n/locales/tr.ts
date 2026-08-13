@@ -99,6 +99,7 @@ export default {
     mismatch: 'Şifreler eşleşmiyor',
     submit: 'Şifreyi değiştir',
     success: 'Şifre değiştirildi',
+    pleaseSignInAgain: 'Şifre değiştirildi — lütfen yeni şifrenizle tekrar giriş yapın.',
   },
   settings: {
     title: 'Ayarlar',

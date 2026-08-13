@@ -96,6 +96,7 @@ export default {
     mismatch: 'Passwords do not match',
     submit: 'Change password',
     success: 'Password changed',
+    pleaseSignInAgain: 'Password changed — please sign in again with your new password.',
   },
   settings: {
     title: 'Settings',
