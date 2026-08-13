@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 
 from accounts.models import User
@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import Attendance, QRToken, SystemSettings
+from .views import _working_days_in_range
 
 
 class GenerateQRTokenTests(APITestCase):
@@ -307,6 +308,77 @@ class EmployeeExportAttendanceTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+class WorkingDaysCalculationTests(APITestCase):
+    def test_excludes_saturdays_and_sundays(self):
+        # يناير 2024: يبدأ الاثنين 1/1، 31 يومًا، منها 8 أيام عطلة أسبوعية (سبت/أحد)
+        self.assertEqual(_working_days_in_range(2024, 1, 31), 23)
+
+    def test_partial_month_up_to_a_given_day(self):
+        # أول أسبوع من يناير 2024 (1 اثنين إلى 7 أحد): 5 أيام عمل + عطلة نهاية الأسبوع
+        self.assertEqual(_working_days_in_range(2024, 1, 7), 5)
+
+
+class MonthlyAttendanceSummaryExportTests(APITestCase):
+    url = "/api/admin/attendance/summary-export/"
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username="admin", password="x", is_admin=True)
+        self.employee = User.objects.create_user(
+            username="emp1",
+            password="x",
+            is_employee=True,
+            first_name="Test",
+            last_name="Employee",
+            is_regular=True,
+        )
+        self.client.force_authenticate(self.admin)
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.work_start_time = time(9, 0)
+        settings_obj.save()
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.employee)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_invalid_year_returns_400(self):
+        response = self.client.get(self.url, {"year": "abc"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_report_contents_for_past_month(self):
+        late_check_in = timezone.make_aware(datetime(2024, 1, 8, 9, 15))  # الاثنين، متأخر 15 دقيقة
+        Attendance.objects.create(
+            user=self.employee,
+            date=date(2024, 1, 8),
+            check_in=late_check_in,
+            check_out=timezone.make_aware(datetime(2024, 1, 8, 17, 0)),
+        )
+        on_time_check_in = timezone.make_aware(datetime(2024, 1, 9, 8, 55))  # الثلاثاء، بالوقت
+        Attendance.objects.create(
+            user=self.employee,
+            date=date(2024, 1, 9),
+            check_in=on_time_check_in,
+            check_out=timezone.make_aware(datetime(2024, 1, 9, 17, 0)),
+        )
+
+        response = self.client.get(self.url, {"year": 2024, "month": 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        workbook = load_workbook(BytesIO(response.content))
+        rows = list(workbook.active.iter_rows(values_only=True))
+        self.assertEqual(
+            rows[0], ("اسم الموظف", "نوع الدوام", "أيام الدوام", "أيام الغياب", "دقائق التأخير")
+        )
+
+        employee_row = rows[1]
+        working_days = _working_days_in_range(2024, 1, 31)
+        self.assertEqual(employee_row[0], "Test Employee")
+        self.assertEqual(employee_row[1], "دوام كامل")
+        self.assertEqual(employee_row[2], 2)  # أيام دوام
+        self.assertEqual(employee_row[3], working_days - 2)  # أيام غياب
+        self.assertEqual(employee_row[4], 15)  # دقائق تأخير (يوم واحد فقط كان متأخرًا)
+
+
 class SystemSettingsTests(APITestCase):
     url = "/api/admin/settings/"
 
@@ -319,6 +391,7 @@ class SystemSettingsTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["qr_token_lifetime_seconds"], 15)
         self.assertEqual(response.data["min_session_duration_seconds"], 60)
+        self.assertEqual(response.data["work_start_time"], "09:00:00")
 
     def test_admin_can_update(self):
         self.client.force_authenticate(self.admin)

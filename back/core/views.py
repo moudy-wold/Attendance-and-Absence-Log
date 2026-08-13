@@ -1,5 +1,6 @@
+import calendar
 import secrets
-from datetime import timedelta
+from datetime import date, timedelta
 
 from accounts.models import User
 from accounts.permissions import IsAdminUser, IsEmployeeUser, IsEntryUser
@@ -196,6 +197,82 @@ class EmployeeExportAttendanceView(APIView):
         return response
 
 
+WEEKEND_ISOWEEKDAYS = {6, 7}  # السبت والأحد
+
+
+def _working_days_in_range(year: int, month: int, up_to_day: int) -> int:
+    return sum(
+        1
+        for day in range(1, up_to_day + 1)
+        if date(year, month, day).isoweekday() not in WEEKEND_ISOWEEKDAYS
+    )
+
+
+class MonthlyAttendanceSummaryExportView(APIView):
+    """يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال شهر محدَّد: أيام دوام، أيام غياب، دقائق تأخير."""
+
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: OpenApiTypes.BINARY})
+    def get(self, request):
+        year, month = _resolve_year_month(request)
+        work_start_time = SystemSettings.get_solo().work_start_time
+
+        today = timezone.localdate()
+        days_in_month = calendar.monthrange(year, month)[1]
+        last_relevant_day = today.day if (year, month) == (today.year, today.month) else days_in_month
+        working_days = _working_days_in_range(year, month, last_relevant_day)
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = f"{year}-{month:02d}"
+        sheet.append(["اسم الموظف", "نوع الدوام", "أيام الدوام", "أيام الغياب", "دقائق التأخير"])
+
+        employees = User.objects.filter(is_employee=True).order_by("username")
+        for employee in employees:
+            records = Attendance.objects.filter(
+                user=employee, date__year=year, date__month=month
+            ).order_by("check_in")
+
+            first_check_in_by_day = {}
+            for record in records:
+                first_check_in_by_day.setdefault(record.date, record.check_in)
+
+            present_days = len(first_check_in_by_day)
+            absent_days = max(working_days - present_days, 0)
+
+            late_minutes = 0
+            for check_in in first_check_in_by_day.values():
+                local_check_in = timezone.localtime(check_in)
+                scheduled_start = local_check_in.replace(
+                    hour=work_start_time.hour,
+                    minute=work_start_time.minute,
+                    second=0,
+                    microsecond=0,
+                )
+                if local_check_in > scheduled_start:
+                    late_minutes += int((local_check_in - scheduled_start).total_seconds() // 60)
+
+            sheet.append(
+                [
+                    f"{employee.first_name} {employee.last_name}".strip(),
+                    "دوام كامل" if employee.is_regular else "دوام جزئي",
+                    present_days,
+                    absent_days,
+                    late_minutes,
+                ]
+            )
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = (
+            f"attachment; filename=attendance_summary_{year}_{month:02d}.xlsx"
+        )
+        workbook.save(response)
+        return response
+
+
 USER_FILTERSET_FIELDS = [
     "username",
     "email",
@@ -245,7 +322,6 @@ class EmployeeDetailView(APIView):
         data = UserSerializer(employee).data
         data["attendance"] = AttendanceSerializer(attendance, many=True).data
         return Response(data)
-
 
 
 class SystemSettingsView(APIView):

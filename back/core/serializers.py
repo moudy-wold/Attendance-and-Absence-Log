@@ -10,7 +10,11 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SystemSettings
-        fields = ["qr_token_lifetime_seconds", "min_session_duration_seconds"]
+        fields = [
+            "qr_token_lifetime_seconds",
+            "min_session_duration_seconds",
+            "work_start_time",
+        ]
 
 
 class QRTokenSerializer(serializers.ModelSerializer):

@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -20,6 +22,10 @@ class SystemSettings(models.Model):
     min_session_duration_seconds = models.PositiveIntegerField(
         default=60,
         help_text="أقل مدة مسموحة بين تسجيل الدخول والخروج لنفس الجلسة — يمنع تسجيل خروج فوري بعد الدخول مباشرة",
+    )
+    work_start_time = models.TimeField(
+        default=datetime.time(9, 0),
+        help_text="وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير",
     )
 
     class Meta:

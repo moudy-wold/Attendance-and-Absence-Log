@@ -4,6 +4,32 @@ info:
   version: 1.0.0
   description: نظام تسجيل حضور وانصراف الموظفين
 paths:
+  /api/admin/attendance/summary-export/:
+    get:
+      operationId: admin_attendance_summary_export_retrieve
+      description: 'يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال شهر محدَّد: أيام
+        دوام، أيام غياب، دقائق تأخير.'
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: integer
+      - in: query
+        name: year
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/admin/employees/:
     get:
       operationId: admin_employees_list
@@ -841,6 +867,10 @@ components:
           type: integer
           maximum: 3600
           minimum: 0
+        work_start_time:
+          type: string
+          format: time
+          description: وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير
     PatchedUpdateUser:
       type: object
       properties:
@@ -957,6 +987,10 @@ components:
           type: integer
           maximum: 3600
           minimum: 0
+        work_start_time:
+          type: string
+          format: time
+          description: وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير
       required:
       - min_session_duration_seconds
       - qr_token_lifetime_seconds
