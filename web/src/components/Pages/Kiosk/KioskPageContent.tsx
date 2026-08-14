@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { generateQrToken, type QrToken } from '../../../api/qr'
 import { AdminHeader } from '../../Global/AdminHeader'
+import { useAuth } from '../../../context/authContextValue'
 
 const REFRESH_SAFETY_MARGIN_MS = 1500
 
 export function KioskPageContent() {
   const { t } = useTranslation()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   const [qrToken, setQrToken] = useState<QrToken | null>(null)
   const [hasError, setHasError] = useState(false)
@@ -59,7 +68,18 @@ export function KioskPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('Attendance kiosk')} />
+      <AdminHeader
+        title={t('Attendance kiosk')}
+        actions={
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
+          >
+            {t('Sign out')}
+          </button>
+        }
+      />
 
       <div className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
         <div className="flex aspect-square w-72 max-w-full items-center justify-center rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">

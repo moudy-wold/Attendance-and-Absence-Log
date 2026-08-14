@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface AdminHeaderProps {
   title: string
   onBack?: () => void
+  actions?: ReactNode
 }
 
-export function AdminHeader({ title, onBack }: AdminHeaderProps) {
+export function AdminHeader({ title, onBack, actions }: AdminHeaderProps) {
   const { t } = useTranslation()
 
   return (
@@ -28,7 +30,8 @@ export function AdminHeader({ title, onBack }: AdminHeaderProps) {
           </svg>
         </button>
       )}
-      <h1 className="text-lg font-semibold text-neutral-900">{title}</h1>
+      <h1 className="flex-1 text-lg font-semibold text-neutral-900">{title}</h1>
+      {actions}
     </div>
   )
 }
