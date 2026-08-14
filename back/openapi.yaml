@@ -7,9 +7,15 @@ paths:
   /api/admin/attendance/summary-export/:
     get:
       operationId: admin_attendance_summary_export_retrieve
-      description: 'يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال شهر محدَّد: أيام
-        دوام، أيام غياب، دقائق تأخير.'
+      description: |-
+        يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال شهر محدَّد: أيام دوام، أيام غياب، دقائق تأخير.
+        يُطبَّق نفس فلتر/بحث قائمة الموظفين حتى يطابق الملف ما يراه الأدمن على الشاشة، وتُترجَم عناوينه
+        حسب باراميتر lang (ar/en/tr) لتطابق لغة الواجهة وقت التصدير.
       parameters:
+      - in: query
+        name: lang
+        schema:
+          type: string
       - in: query
         name: month
         schema:
@@ -280,6 +286,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/SystemSettings'
           description: ''
+  /api/admin/stats/overview/:
+    get:
+      operationId: admin_stats_overview_retrieve
+      description: |-
+        لوحة إحصائيات شاملة للأدمن خلال شهر محدَّد: ملخص عام، اتجاه الحضور اليومي، وأكثر الموظفين
+        تأخيرًا وغيابًا. لا تُطبَّق عليها فلاتر — تغطي كل الموظفين دائمًا.
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: integer
+      - in: query
+        name: year
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatsOverview'
+          description: ''
   /api/attendance/my/:
     get:
       operationId: attendance_my_list
@@ -329,6 +361,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Attendance'
+          description: ''
+  /api/attendance/stats/:
+    get:
+      operationId: attendance_stats_retrieve
+      description: إحصائيات الحضور الشخصية للموظف الحالي (وحده) خلال شهر محدَّد.
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: integer
+      - in: query
+        name: year
+        schema:
+          type: integer
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeStats'
           description: ''
   /api/auth/change-password/:
     post:
@@ -697,6 +753,65 @@ components:
       description: |-
         * `check_in` - Check In
         * `check_out` - Check Out
+    AdminStatsOverview:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        working_days:
+          type: integer
+        total_employees:
+          type: integer
+        regular_count:
+          type: integer
+        irregular_count:
+          type: integer
+        active_count:
+          type: integer
+        suspended_count:
+          type: integer
+        entry_account_count:
+          type: integer
+        attendance_rate:
+          type: number
+          format: double
+        total_present_days:
+          type: integer
+        total_absent_days:
+          type: integer
+        total_late_minutes:
+          type: integer
+        daily_trend:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyAttendanceCount'
+        top_late:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopEmployeeStat'
+        top_absent:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopEmployeeStat'
+      required:
+      - active_count
+      - attendance_rate
+      - daily_trend
+      - entry_account_count
+      - irregular_count
+      - month
+      - regular_count
+      - suspended_count
+      - top_absent
+      - top_late
+      - total_absent_days
+      - total_employees
+      - total_late_minutes
+      - total_present_days
+      - working_days
+      - year
     Attendance:
       type: object
       properties:
@@ -743,6 +858,28 @@ components:
       required:
       - password
       - username
+    DailyAttendanceCount:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        present_count:
+          type: integer
+      required:
+      - date
+      - present_count
+    DailyLateMinutes:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        late_minutes:
+          type: integer
+      required:
+      - date
+      - late_minutes
     EmployeeAttendance:
       type: object
       properties:
@@ -803,6 +940,37 @@ components:
       - attendance
       - id
       - username
+    EmployeeStats:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        working_days:
+          type: integer
+        present_days:
+          type: integer
+        absent_days:
+          type: integer
+        late_minutes:
+          type: integer
+        on_time_rate:
+          type: number
+          format: double
+        daily_late_minutes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyLateMinutes'
+      required:
+      - absent_days
+      - daily_late_minutes
+      - late_minutes
+      - month
+      - on_time_rate
+      - present_days
+      - working_days
+      - year
     MessageResponse:
       type: object
       properties:
@@ -871,6 +1039,11 @@ components:
           type: string
           format: time
           description: وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير
+        work_end_time:
+          type: string
+          format: time
+          description: وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر
+            في التقارير
     PatchedUpdateUser:
       type: object
       properties:
@@ -991,6 +1164,11 @@ components:
           type: string
           format: time
           description: وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير
+        work_end_time:
+          type: string
+          format: time
+          description: وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر
+            في التقارير
       required:
       - min_session_duration_seconds
       - qr_token_lifetime_seconds
@@ -1005,6 +1183,19 @@ components:
       required:
       - access
       - refresh
+    TopEmployeeStat:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        value:
+          type: integer
+      required:
+      - id
+      - name
+      - value
     UpdateUser:
       type: object
       properties:

@@ -14,6 +14,7 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
             "qr_token_lifetime_seconds",
             "min_session_duration_seconds",
             "work_start_time",
+            "work_end_time",
         ]
 
 

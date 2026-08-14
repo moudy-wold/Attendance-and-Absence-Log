@@ -334,6 +334,7 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         self.client.force_authenticate(self.admin)
         settings_obj = SystemSettings.get_solo()
         settings_obj.work_start_time = time(9, 0)
+        settings_obj.work_end_time = time(17, 0)
         settings_obj.save()
 
     def test_non_admin_forbidden(self):
@@ -346,19 +347,19 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_report_contents_for_past_month(self):
-        late_check_in = timezone.make_aware(datetime(2024, 1, 8, 9, 15))  # الاثنين، متأخر 15 دقيقة
+        # الاثنين: حضور متأخر 15 دقيقة، وانصراف بالوقت تمامًا
         Attendance.objects.create(
             user=self.employee,
             date=date(2024, 1, 8),
-            check_in=late_check_in,
+            check_in=timezone.make_aware(datetime(2024, 1, 8, 9, 15)),
             check_out=timezone.make_aware(datetime(2024, 1, 8, 17, 0)),
         )
-        on_time_check_in = timezone.make_aware(datetime(2024, 1, 9, 8, 55))  # الثلاثاء، بالوقت
+        # الثلاثاء: حضور بالوقت، وانصراف مبكر 30 دقيقة
         Attendance.objects.create(
             user=self.employee,
             date=date(2024, 1, 9),
-            check_in=on_time_check_in,
-            check_out=timezone.make_aware(datetime(2024, 1, 9, 17, 0)),
+            check_in=timezone.make_aware(datetime(2024, 1, 9, 8, 55)),
+            check_out=timezone.make_aware(datetime(2024, 1, 9, 16, 30)),
         )
 
         response = self.client.get(self.url, {"year": 2024, "month": 1})
@@ -367,7 +368,15 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         workbook = load_workbook(BytesIO(response.content))
         rows = list(workbook.active.iter_rows(values_only=True))
         self.assertEqual(
-            rows[0], ("اسم الموظف", "نوع الدوام", "أيام الدوام", "أيام الغياب", "دقائق التأخير")
+            rows[0],
+            (
+                "اسم الموظف",
+                "نوع الدوام",
+                "أيام الدوام",
+                "أيام الغياب",
+                "دقائق التأخير",
+                "دقائق الانصراف المبكر",
+            ),
         )
 
         employee_row = rows[1]
@@ -376,7 +385,8 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         self.assertEqual(employee_row[1], "دوام كامل")
         self.assertEqual(employee_row[2], 2)  # أيام دوام
         self.assertEqual(employee_row[3], working_days - 2)  # أيام غياب
-        self.assertEqual(employee_row[4], 15)  # دقائق تأخير (يوم واحد فقط كان متأخرًا)
+        self.assertEqual(employee_row[4], 15)  # دقائق تأخير (يوم الاثنين فقط)
+        self.assertEqual(employee_row[5], 30)  # دقائق انصراف مبكر (يوم الثلاثاء فقط)
 
 
 class SystemSettingsTests(APITestCase):
@@ -392,6 +402,7 @@ class SystemSettingsTests(APITestCase):
         self.assertEqual(response.data["qr_token_lifetime_seconds"], 15)
         self.assertEqual(response.data["min_session_duration_seconds"], 60)
         self.assertEqual(response.data["work_start_time"], "09:00:00")
+        self.assertEqual(response.data["work_end_time"], "17:00:00")
 
     def test_admin_can_update(self):
         self.client.force_authenticate(self.admin)

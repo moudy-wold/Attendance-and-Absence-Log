@@ -235,16 +235,23 @@ def _resolve_working_days(year: int, month: int) -> int:
     return _working_days_in_range(year, month, last_relevant_day)
 
 
-def _employee_month_stats(employee, year: int, month: int, work_start_time, working_days: int) -> dict:
-    """يحسب أيام الدوام/الغياب ودقائق التأخير اليومية لموظف واحد خلال شهر محدَّد، بالاعتماد على أول
-    تسجيل حضور بكل يوم مقارنة بوقت بدء الدوام الرسمي."""
+def _employee_month_stats(
+    employee, year: int, month: int, *, work_start_time, work_end_time, working_days: int
+) -> dict:
+    """يحسب أيام الدوام/الغياب ودقائق التأخير والانصراف المبكر لموظف واحد خلال شهر محدَّد.
+    التأخير يُقاس من أول تسجيل حضور باليوم، والانصراف المبكر من آخر تسجيل خروج باليوم."""
     records = Attendance.objects.filter(
         user=employee, date__year=year, date__month=month
     ).order_by("check_in")
 
     first_check_in_by_day = {}
+    last_check_out_by_day = {}
     for record in records:
         first_check_in_by_day.setdefault(record.date, record.check_in)
+        if record.check_out:
+            current_latest = last_check_out_by_day.get(record.date)
+            if current_latest is None or record.check_out > current_latest:
+                last_check_out_by_day[record.date] = record.check_out
 
     daily_late_minutes = {}
     for day, check_in in first_check_in_by_day.items():
@@ -255,28 +262,60 @@ def _employee_month_stats(employee, year: int, month: int, work_start_time, work
         late = int((local_check_in - scheduled_start).total_seconds() // 60)
         daily_late_minutes[day] = max(late, 0)
 
+    daily_early_leave_minutes = {}
+    for day, check_out in last_check_out_by_day.items():
+        local_check_out = timezone.localtime(check_out)
+        scheduled_end = local_check_out.replace(
+            hour=work_end_time.hour, minute=work_end_time.minute, second=0, microsecond=0
+        )
+        early = int((scheduled_end - local_check_out).total_seconds() // 60)
+        daily_early_leave_minutes[day] = max(early, 0)
+
     present_days = len(first_check_in_by_day)
     return {
         "present_days": present_days,
         "absent_days": max(working_days - present_days, 0),
         "late_minutes": sum(daily_late_minutes.values()),
+        "early_leave_minutes": sum(daily_early_leave_minutes.values()),
         "daily_late_minutes": daily_late_minutes,
+        "daily_early_leave_minutes": daily_early_leave_minutes,
     }
 
 
 EXPORT_SUMMARY_LABELS = {
     "ar": {
-        "columns": ["اسم الموظف", "نوع الدوام", "أيام الدوام", "أيام الغياب", "دقائق التأخير"],
+        "columns": [
+            "اسم الموظف",
+            "نوع الدوام",
+            "أيام الدوام",
+            "أيام الغياب",
+            "دقائق التأخير",
+            "دقائق الانصراف المبكر",
+        ],
         "full_time": "دوام كامل",
         "part_time": "دوام جزئي",
     },
     "en": {
-        "columns": ["Employee name", "Duty type", "Days present", "Days absent", "Late minutes"],
+        "columns": [
+            "Employee name",
+            "Duty type",
+            "Days present",
+            "Days absent",
+            "Late minutes",
+            "Early leave minutes",
+        ],
         "full_time": "Full-time",
         "part_time": "Part-time",
     },
     "tr": {
-        "columns": ["Çalışan adı", "Çalışma türü", "Çalışılan gün", "Devamsızlık günü", "Geç kalma (dakika)"],
+        "columns": [
+            "Çalışan adı",
+            "Çalışma türü",
+            "Çalışılan gün",
+            "Devamsızlık günü",
+            "Geç kalma (dakika)",
+            "Erken çıkış (dakika)",
+        ],
         "full_time": "Tam zamanlı",
         "part_time": "Yarı zamanlı",
     },
@@ -301,7 +340,9 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
     )
     def get(self, request):
         year, month = _resolve_year_month(request)
-        work_start_time = SystemSettings.get_solo().work_start_time
+        settings_obj = SystemSettings.get_solo()
+        work_start_time = settings_obj.work_start_time
+        work_end_time = settings_obj.work_end_time
         labels = EXPORT_SUMMARY_LABELS.get(request.query_params.get("lang"), EXPORT_SUMMARY_LABELS["ar"])
         working_days = _resolve_working_days(year, month)
 
@@ -312,7 +353,14 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
 
         employees = self.filter_queryset(self.get_queryset())
         for employee in employees:
-            stats = _employee_month_stats(employee, year, month, work_start_time, working_days)
+            stats = _employee_month_stats(
+                employee,
+                year,
+                month,
+                work_start_time=work_start_time,
+                work_end_time=work_end_time,
+                working_days=working_days,
+            )
             sheet.append(
                 [
                     f"{employee.first_name} {employee.last_name}".strip(),
@@ -320,6 +368,7 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
                     stats["present_days"],
                     stats["absent_days"],
                     stats["late_minutes"],
+                    stats["early_leave_minutes"],
                 ]
             )
 
@@ -342,7 +391,9 @@ class AdminStatsOverviewView(APIView):
     @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: AdminStatsOverviewSerializer})
     def get(self, request):
         year, month = _resolve_year_month(request)
-        work_start_time = SystemSettings.get_solo().work_start_time
+        settings_obj = SystemSettings.get_solo()
+        work_start_time = settings_obj.work_start_time
+        work_end_time = settings_obj.work_end_time
         working_days = _resolve_working_days(year, month)
 
         employees = list(User.objects.filter(is_employee=True).order_by("username"))
@@ -357,7 +408,14 @@ class AdminStatsOverviewView(APIView):
         top_absent = []
 
         for employee in employees:
-            stats = _employee_month_stats(employee, year, month, work_start_time, working_days)
+            stats = _employee_month_stats(
+                employee,
+                year,
+                month,
+                work_start_time=work_start_time,
+                work_end_time=work_end_time,
+                working_days=working_days,
+            )
             total_present_days += stats["present_days"]
             total_absent_days += stats["absent_days"]
             total_late_minutes += stats["late_minutes"]
@@ -409,10 +467,17 @@ class EmployeeStatsView(APIView):
     @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: EmployeeStatsSerializer})
     def get(self, request):
         year, month = _resolve_year_month(request)
-        work_start_time = SystemSettings.get_solo().work_start_time
+        settings_obj = SystemSettings.get_solo()
         working_days = _resolve_working_days(year, month)
 
-        stats = _employee_month_stats(request.user, year, month, work_start_time, working_days)
+        stats = _employee_month_stats(
+            request.user,
+            year,
+            month,
+            work_start_time=settings_obj.work_start_time,
+            work_end_time=settings_obj.work_end_time,
+            working_days=working_days,
+        )
         present_days = stats["present_days"]
         on_time_days = sum(1 for minutes in stats["daily_late_minutes"].values() if minutes == 0)
         on_time_rate = round((on_time_days / present_days) * 100, 1) if present_days else 0.0

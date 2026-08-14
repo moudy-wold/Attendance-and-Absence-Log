@@ -27,6 +27,10 @@ class SystemSettings(models.Model):
         default=datetime.time(9, 0),
         help_text="وقت بدء الدوام الرسمي — يُستخدم لحساب دقائق التأخير في التقارير",
     )
+    work_end_time = models.TimeField(
+        default=datetime.time(17, 0),
+        help_text="وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر في التقارير",
+    )
 
     class Meta:
         verbose_name = "System Settings"
