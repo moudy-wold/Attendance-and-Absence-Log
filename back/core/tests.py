@@ -226,6 +226,27 @@ class EmployeeAdminViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["attendance"]), 1)
 
+    def test_detail_includes_month_stats(self):
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.work_start_time = time(9, 0)
+        settings_obj.work_end_time = time(17, 0)
+        settings_obj.save()
+
+        Attendance.objects.create(
+            user=self.employee,
+            date=date(2024, 1, 8),
+            check_in=timezone.make_aware(datetime(2024, 1, 8, 9, 15)),
+            check_out=timezone.make_aware(datetime(2024, 1, 8, 16, 30)),
+        )
+
+        response = self.client.get(f"/api/admin/employees/{self.employee.pk}/", {"year": 2024, "month": 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        working_days = _working_days_in_range(2024, 1, 31)
+        self.assertEqual(response.data["present_days"], 1)
+        self.assertEqual(response.data["absent_days"], working_days - 1)
+        self.assertEqual(response.data["late_minutes"], 15)
+        self.assertEqual(response.data["early_leave_minutes"], 30)
+
     def test_detail_404_for_non_employee(self):
         response = self.client.get(f"/api/admin/employees/{self.entry.pk}/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

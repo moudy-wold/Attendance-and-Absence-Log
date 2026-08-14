@@ -56,9 +56,19 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 class EmployeeAttendanceSerializer(UserSerializer):
     attendance = AttendanceSerializer(many=True, read_only=True)
+    present_days = serializers.IntegerField(read_only=True)
+    absent_days = serializers.IntegerField(read_only=True)
+    late_minutes = serializers.IntegerField(read_only=True)
+    early_leave_minutes = serializers.IntegerField(read_only=True)
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ["attendance"]
+        fields = UserSerializer.Meta.fields + [
+            "attendance",
+            "present_days",
+            "absent_days",
+            "late_minutes",
+            "early_leave_minutes",
+        ]
 
 
 class DailyAttendanceCountSerializer(serializers.Serializer):

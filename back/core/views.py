@@ -527,8 +527,23 @@ class EmployeeDetailView(APIView):
             user=employee, date__year=year, date__month=month
         ).order_by("date")
 
+        settings_obj = SystemSettings.get_solo()
+        working_days = _resolve_working_days(year, month)
+        stats = _employee_month_stats(
+            employee,
+            year,
+            month,
+            work_start_time=settings_obj.work_start_time,
+            work_end_time=settings_obj.work_end_time,
+            working_days=working_days,
+        )
+
         data = UserSerializer(employee).data
         data["attendance"] = AttendanceSerializer(attendance, many=True).data
+        data["present_days"] = stats["present_days"]
+        data["absent_days"] = stats["absent_days"]
+        data["late_minutes"] = stats["late_minutes"]
+        data["early_leave_minutes"] = stats["early_leave_minutes"]
         return Response(data)
 
 

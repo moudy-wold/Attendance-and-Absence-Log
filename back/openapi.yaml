@@ -493,6 +493,25 @@ paths:
                 $ref: '#/components/schemas/User'
           description: ''
   /api/auth/users/{id}/:
+    get:
+      operationId: auth_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     put:
       operationId: auth_users_update
       parameters:
@@ -936,9 +955,25 @@ components:
           items:
             $ref: '#/components/schemas/Attendance'
           readOnly: true
+        present_days:
+          type: integer
+          readOnly: true
+        absent_days:
+          type: integer
+          readOnly: true
+        late_minutes:
+          type: integer
+          readOnly: true
+        early_leave_minutes:
+          type: integer
+          readOnly: true
       required:
+      - absent_days
       - attendance
+      - early_leave_minutes
       - id
+      - late_minutes
+      - present_days
       - username
     EmployeeStats:
       type: object
@@ -1046,6 +1081,9 @@ components:
             في التقارير
     PatchedUpdateUser:
       type: object
+      description: |-
+        يستخدمها الأدمن فقط (الفيو مقيّد بـ IsAdminUser) — لذا تضمين كلمة مرور هنا آمن،
+        وهي منفصلة تمامًا عن ChangePasswordSerializer التي تخص المستخدم نفسه ذاتيًا.
       properties:
         email:
           title: Email address
@@ -1086,6 +1124,9 @@ components:
         is_first_login:
           type: boolean
           description: يصبح False بعد أول تغيير لكلمة المرور
+        password:
+          type: string
+          writeOnly: true
     QRToken:
       type: object
       properties:
@@ -1198,6 +1239,9 @@ components:
       - value
     UpdateUser:
       type: object
+      description: |-
+        يستخدمها الأدمن فقط (الفيو مقيّد بـ IsAdminUser) — لذا تضمين كلمة مرور هنا آمن،
+        وهي منفصلة تمامًا عن ChangePasswordSerializer التي تخص المستخدم نفسه ذاتيًا.
       properties:
         email:
           title: Email address
@@ -1238,6 +1282,9 @@ components:
         is_first_login:
           type: boolean
           description: يصبح False بعد أول تغيير لكلمة المرور
+        password:
+          type: string
+          writeOnly: true
     User:
       type: object
       properties:
