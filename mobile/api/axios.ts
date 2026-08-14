@@ -33,8 +33,8 @@ axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
     const status = error.response?.status;
-
-    if (status === 401) {
+    console.log(error.response?.data, "ssssss");
+    if (status === 401 || status === 403) {
       await tokenService.clear();
       notifyUnauthorized();
     }

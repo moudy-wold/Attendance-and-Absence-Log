@@ -36,6 +36,11 @@ function RootNavigator() {
         <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="history" />
         <Stack.Screen name="stats" />
+        <Stack.Screen name="admin-employees/index" />
+        <Stack.Screen name="admin-employees/[id]" />
+        <Stack.Screen name="admin-entry-accounts/index" />
+        <Stack.Screen name="admin-entry-accounts/[id]" />
+        <Stack.Screen name="admin-settings" />
       </Stack.Protected>
     </Stack>
   );

@@ -25,6 +25,12 @@ export interface UpdateUserPayload {
   is_regular?: boolean
   is_active?: boolean
   device_id?: string | null
+  /** Admin-only: sets the account's password directly, no old password required. */
+  password?: string
+}
+
+export async function getUser(id: number) {
+  return await axiosInstance.get<RawUser>(`/auth/users/${id}/`)
 }
 
 export async function updateUser(id: number, payload: UpdateUserPayload) {

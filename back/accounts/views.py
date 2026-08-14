@@ -38,6 +38,10 @@ class UpdateUserView(generics.UpdateAPIView):
     serializer_class = UpdateUserSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={200: UserSerializer})
+    def get(self, request, *args, **kwargs):
+        return Response(UserSerializer(self.get_object()).data)
+
     def _update(self, partial: bool) -> Response:
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=self.request.data, partial=partial)

@@ -32,11 +32,11 @@ export function ScanScreenContent() {
     async (token: string, action: QrAction) => {
       setStep({ name: 'authenticating', token, action })
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: t('scan.biometricPrompt'),
+        promptMessage: t('Confirm it’s you'),
       })
 
       if (!result.success) {
-        setStep({ name: 'error', message: t('scan.biometricFailed') })
+        setStep({ name: 'error', message: t('Identity verification failed, try scanning again') })
         return
       }
 
@@ -49,7 +49,7 @@ export function ScanScreenContent() {
           at: data.check_out ?? data.check_in,
         })
       } catch (error) {
-        setStep({ name: 'error', message: extractApiError(error, t('common.unexpectedError')) })
+        setStep({ name: 'error', message: extractApiError(error, t('Something went wrong, please try again')) })
       }
     },
     [t],
@@ -64,12 +64,12 @@ export function ScanScreenContent() {
       try {
         const { data } = await validateQrToken(result.data)
         if (!data.valid) {
-          setStep({ name: 'error', message: t('scan.invalidCode') })
+          setStep({ name: 'error', message: t('This code is invalid or has expired, try scanning again') })
           return
         }
         await authenticate(result.data, data.action)
       } catch (error) {
-        setStep({ name: 'error', message: extractApiError(error, t('scan.invalidCode')) })
+        setStep({ name: 'error', message: extractApiError(error, t('This code is invalid or has expired, try scanning again')) })
       }
     },
     [authenticate, t],
@@ -83,9 +83,9 @@ export function ScanScreenContent() {
     return (
       <View style={tw`flex-1 items-center justify-center gap-4 bg-neutral-50 p-6 dark:bg-neutral-950`}>
         <Text style={tw`text-center text-sm text-neutral-600 dark:text-neutral-300`}>
-          {t('scan.cameraPermission')}
+          {t('Camera access is needed to scan the attendance code.')}
         </Text>
-        <Button onPress={requestPermission}>{t('scan.grantPermission')}</Button>
+        <Button onPress={requestPermission}>{t('Allow camera access')}</Button>
       </View>
     )
   }
@@ -103,12 +103,12 @@ export function ScanScreenContent() {
         <View style={tw`flex-1 items-center justify-center gap-5 bg-neutral-50 p-6 dark:bg-neutral-950`}>
           {step.name === 'authenticating' && (
             <Text style={tw`text-center text-sm text-neutral-600 dark:text-neutral-300`}>
-              {t('scan.waitingBiometric')}
+              {t('Confirm your identity to continue')}
             </Text>
           )}
 
           {step.name === 'recording' && (
-            <Text style={tw`text-center text-sm text-neutral-600 dark:text-neutral-300`}>{t('scan.saving')}</Text>
+            <Text style={tw`text-center text-sm text-neutral-600 dark:text-neutral-300`}>{t('Recording your attendance…')}</Text>
           )}
 
           {step.name === 'success' && (
@@ -117,9 +117,9 @@ export function ScanScreenContent() {
                 <Text style={tw`text-2xl`}>✓</Text>
               </View>
               <Text style={tw`text-center text-base font-semibold text-neutral-900 dark:text-white`}>
-                {step.action === 'check_in' ? t('scan.checkedIn') : t('scan.checkedOut')}
+                {step.action === 'check_in' ? t('Check-in recorded') : t('Check-out recorded')}
               </Text>
-              <Button onPress={() => router.replace('/')}>{t('scan.backHome')}</Button>
+              <Button onPress={() => router.replace('/')}>{t('Back to home')}</Button>
             </>
           )}
 
@@ -127,7 +127,7 @@ export function ScanScreenContent() {
             <>
               <Text style={tw`text-center text-sm text-red-500`}>{step.message}</Text>
               <View style={tw`w-full gap-3`}>
-                <Button onPress={resetToScanning}>{t('scan.tryAgain')}</Button>
+                <Button onPress={resetToScanning}>{t('Scan again')}</Button>
               </View>
             </>
           )}
@@ -137,7 +137,7 @@ export function ScanScreenContent() {
       {step.name === 'scanning' && (
         <View style={tw`absolute inset-x-0 bottom-10 items-center px-6`}>
           <Text style={tw`rounded-full bg-black/60 px-4 py-2 text-center text-sm text-white`}>
-            {t('scan.instructions')}
+            {t('Point the camera at the screen at the entrance')}
           </Text>
         </View>
       )}

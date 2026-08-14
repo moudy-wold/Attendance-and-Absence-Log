@@ -1,11 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { login as loginRequest, type LoginPayload } from '../api/auth'
-import { tokenService } from '../api/tokenService'
+import { tokenService, USER_STORAGE_KEY } from '../api/tokenService'
+import { setUnauthorizedHandler } from '../api/authBridge'
 import { mapUser, type User } from '../types/user'
 import { getDeviceId } from '../lib/deviceId'
 import { AuthContext, type AuthContextValue } from './authContextValue'
-
-const USER_STORAGE_KEY = 'auth_user'
 
 function readStoredUser(): User | null {
   const raw = localStorage.getItem(USER_STORAGE_KEY)
@@ -19,6 +18,13 @@ function readStoredUser(): User | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => readStoredUser())
+
+  useEffect(() => {
+    // A 401/403 from the API layer clears tokens and calls this — RequireAuth
+    // then redirects to /login on its own, no page reload needed.
+    setUnauthorizedHandler(() => setUser(null))
+    return () => setUnauthorizedHandler(null)
+  }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -41,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       logout() {
         tokenService.clear()
-        localStorage.removeItem(USER_STORAGE_KEY)
         setUser(null)
       },
       updateUser(patch: Partial<User>) {

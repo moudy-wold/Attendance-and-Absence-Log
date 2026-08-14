@@ -120,6 +120,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
+    """يستخدمها الأدمن فقط (الفيو مقيّد بـ IsAdminUser) — لذا تضمين كلمة مرور هنا آمن،
+    وهي منفصلة تمامًا عن ChangePasswordSerializer التي تخص المستخدم نفسه ذاتيًا."""
+
+    password = serializers.CharField(
+        write_only=True, required=False, allow_blank=False, validators=[validate_password]
+    )
+
     class Meta:
         model = User
         fields = [
@@ -134,7 +141,16 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             "is_active",
             "device_id",
             "is_first_login",
+            "password",
         ]
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+            user.save(update_fields=["password"])
+        return user
 
 
 class ChangePasswordSerializer(serializers.Serializer):

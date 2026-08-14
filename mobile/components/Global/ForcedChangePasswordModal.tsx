@@ -40,10 +40,10 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
 
   function validate(): Partial<Record<keyof Form, string>> {
     const next: Partial<Record<keyof Form, string>> = {}
-    if (!form.oldPassword) next.oldPassword = t('changePassword.oldPasswordRequired')
-    if (form.newPassword.length < 8) next.newPassword = t('changePassword.tooShort')
-    else if (/^\d+$/.test(form.newPassword)) next.newPassword = t('changePassword.numericOnly')
-    if (form.confirmPassword !== form.newPassword) next.confirmPassword = t('changePassword.mismatch')
+    if (!form.oldPassword) next.oldPassword = t('Please enter your current password')
+    if (form.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
+    else if (/^\d+$/.test(form.newPassword)) next.newPassword = t('Password cannot be numbers only')
+    if (form.confirmPassword !== form.newPassword) next.confirmPassword = t('Passwords do not match')
     return next
   }
 
@@ -59,10 +59,10 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
     setIsSubmitting(true)
     try {
       await changePassword({ old_password: form.oldPassword, new_password: form.newPassword })
-      Toast.show({ type: 'success', text1: t('changePassword.success') })
+      Toast.show({ type: 'success', text1: t('Password changed') })
       onSuccess()
     } catch (error) {
-      Toast.show({ type: 'error', text1: extractApiError(error, t('common.unexpectedError')) })
+      Toast.show({ type: 'error', text1: extractApiError(error, t('Something went wrong, please try again')) })
     } finally {
       setIsSubmitting(false)
     }
@@ -80,33 +80,35 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
       >
         <View>
           <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>
-            {t('changePassword.title')}
+            {t('Set a new password')}
           </Text>
-          <Text style={tw`mt-1 text-sm text-neutral-500`}>{t('changePassword.subtitle')}</Text>
+          <Text style={tw`mt-1 text-sm text-neutral-500`}>
+            {t('This is your first time signing in — choose a new password to continue.')}
+          </Text>
         </View>
 
         <PasswordField
-          label={t('changePassword.oldPassword')}
+          label={t('Current password')}
           value={form.oldPassword}
           onChangeText={handleChange('oldPassword')}
           error={errors.oldPassword}
           editable={!currentPassword}
         />
         <PasswordField
-          label={t('changePassword.newPassword')}
+          label={t('New password')}
           value={form.newPassword}
           onChangeText={handleChange('newPassword')}
           error={errors.newPassword}
         />
         <PasswordField
-          label={t('changePassword.confirmPassword')}
+          label={t('Confirm new password')}
           value={form.confirmPassword}
           onChangeText={handleChange('confirmPassword')}
           error={errors.confirmPassword}
         />
 
         <Button onPress={handleSubmit} loading={isSubmitting}>
-          {t('changePassword.submit')}
+          {t('Change password')}
         </Button>
       </View>
     </KeyboardAwareScrollView>
