@@ -129,7 +129,7 @@ export function EntryAccountsPageContent() {
                 <th className="px-4 py-3 text-start font-medium">{t('employees.name')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('employees.phone')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('entryAccounts.device')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.status')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('active/inactive')}</th>
                 <th className="px-4 py-3 text-start font-medium" />
               </tr>
             </thead>
@@ -152,7 +152,10 @@ export function EntryAccountsPageContent() {
               )}
 
               {entryUsers?.map((user) => (
-                <tr key={user.id} className="border-b border-neutral-100 last:border-0">
+                <tr
+                  key={user.id}
+                  className="border-b border-neutral-100 transition-colors last:border-0 hover:bg-neutral-50"
+                >
                   <td className="px-4 py-3.5 font-medium text-neutral-800">{user.fullName}</td>
                   <td className="px-4 py-3.5 text-neutral-500">{user.phone || '—'}</td>
                   <td className="px-4 py-3.5">
@@ -166,29 +169,48 @@ export function EntryAccountsPageContent() {
                       role="switch"
                       aria-checked={user.isActive}
                       disabled={pendingId === user.id}
-                      onClick={() => handleToggleActive(user, !user.isActive)}
-                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
-                        user.isActive ? 'bg-neutral-900' : 'bg-neutral-200'
-                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleToggleActive(user, !user.isActive)
+                      }}
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${user.isActive ? 'bg-neutral-900' : 'bg-neutral-200'
+                        }`}
                     >
                       <span
-                        className={`absolute top-0.5 start-0.5 size-5 rounded-full bg-white shadow transition-transform ${
-                          user.isActive ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-0.5 start-0.5 size-5 rounded-full bg-white shadow transition-transform ${user.isActive ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'
+                          }`}
                       />
                     </button>
                   </td>
-                  <td className="px-4 py-3.5 text-end">
-                    {user.deviceId && (
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-2">
+                      {user.deviceId && (
+                        <button
+                          type="button"
+                          disabled={pendingId === user.id}
+                          onClick={() => handleResetDevice(user)}
+                          className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-50"
+                        >
+                          {t('employeeDetail.resetDevice')}
+                        </button>
+                      )}
                       <button
                         type="button"
-                        disabled={pendingId === user.id}
-                        onClick={() => handleResetDevice(user)}
-                        className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-50"
+                        aria-label={t('entryAccounts.edit')}
+                        onClick={() => navigate(`/entry-accounts/${user.id}`)}
+                        className="flex  size-8 shrink-0 items-center justify-center border border-gray-200 rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
                       >
-                        {t('employeeDetail.resetDevice')}
+                        <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+                          <path
+                            d="M12.9 3.4a1.5 1.5 0 0 1 2.12 0l1.58 1.58a1.5 1.5 0 0 1 0 2.12L7.5 16.2l-3.7.8.8-3.7L12.9 3.4Z"
+                            stroke="currentColor"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}

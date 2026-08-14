@@ -48,6 +48,7 @@ export default {
     pageIndicator: 'Sayfa {{page}} / {{totalPages}} · toplam {{count}}',
     prevPage: 'Önceki',
     nextPage: 'Sonraki',
+    edit: 'Düzenle',
     form: {
       title: 'Yeni hesap',
       accountType: 'Hesap türü',
@@ -99,6 +100,15 @@ export default {
     create: '+ Yeni giriş ekranı hesabı',
     device: 'Cihaz',
     empty: 'Henüz giriş ekranı hesabı yok',
+    edit: 'Düzenle',
+  },
+  entryAccountDetail: {
+    infoSectionTitle: 'Hesap bilgileri',
+    email: 'E-posta (isteğe bağlı)',
+    passwordSectionTitle: 'Şifreyi değiştir',
+    newPassword: 'Yeni şifre',
+    changePasswordSubmit: 'Şifreyi güncelle',
+    passwordUpdated: 'Şifre güncellendi',
   },
   changePassword: {
     title: 'Yeni bir şifre belirle',

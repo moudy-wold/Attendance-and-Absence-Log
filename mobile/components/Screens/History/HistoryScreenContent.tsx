@@ -32,7 +32,7 @@ export function HistoryScreenContent() {
         setHasNext(Boolean(data.next))
         setPage(1)
       })
-      .catch((error) => Toast.show({ type: 'error', text1: extractApiError(error, t('common.unexpectedError')) }))
+      .catch((error) => Toast.show({ type: 'error', text1: extractApiError(error, t('Something went wrong, please try again')) }))
   }, [t])
 
   const loadMore = useCallback(() => {
@@ -45,7 +45,7 @@ export function HistoryScreenContent() {
         setHasNext(Boolean(data.next))
         setPage(nextPage)
       })
-      .catch((error) => Toast.show({ type: 'error', text1: extractApiError(error, t('common.unexpectedError')) }))
+      .catch((error) => Toast.show({ type: 'error', text1: extractApiError(error, t('Something went wrong, please try again')) }))
       .finally(() => setIsLoadingMore(false))
   }, [hasNext, isLoadingMore, page, t])
 
@@ -53,9 +53,9 @@ export function HistoryScreenContent() {
     <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950`}>
       <View style={tw`flex-row items-center gap-3 px-5 pb-4`}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={tw`text-sm text-neutral-500`}>{t('common.back')}</Text>
+          <Text style={tw`text-sm text-neutral-500`}>{t('Back')}</Text>
         </Pressable>
-        <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>{t('history.title')}</Text>
+        <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>{t('My attendance')}</Text>
       </View>
 
       <FlatList
@@ -66,7 +66,7 @@ export function HistoryScreenContent() {
         onEndReached={loadMore}
         ListEmptyComponent={
           records !== null ? (
-            <Text style={tw`mt-10 text-center text-sm text-neutral-400`}>{t('history.empty')}</Text>
+            <Text style={tw`mt-10 text-center text-sm text-neutral-400`}>{t('No attendance records for this month yet')}</Text>
           ) : null
         }
         ListFooterComponent={isLoadingMore ? <ActivityIndicator style={tw`py-4`} /> : null}
@@ -81,7 +81,7 @@ export function HistoryScreenContent() {
               <Text style={tw`text-sm text-neutral-500`}>{formatTime(item.check_in, i18n.language)}</Text>
               <Text style={tw`text-neutral-300`}>→</Text>
               <Text style={tw`text-sm text-neutral-500`}>
-                {item.check_out ? formatTime(item.check_out, i18n.language) : t('history.open')}
+                {item.check_out ? formatTime(item.check_out, i18n.language) : t('In progress')}
               </Text>
             </View>
           </View>

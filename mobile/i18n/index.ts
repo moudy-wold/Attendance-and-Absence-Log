@@ -31,6 +31,11 @@ i18n.use(initReactI18next).init({
   fallbackLng: 'ar',
   supportedLngs: supportedLanguages,
   interpolation: { escapeValue: false },
+  // Keys are literal English sentences (e.g. "Camera access is needed to scan
+  // the attendance code."), not dot-namespaced paths — disable i18next's
+  // default splitting so punctuation inside a key is never misread as nesting.
+  keySeparator: false,
+  nsSeparator: false,
 })
 
 export default i18n

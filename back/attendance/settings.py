@@ -26,7 +26,11 @@ SECRET_KEY = "django-insecure-1-2gm!_6bu8*@%s+_&o(9i0wh0$!ph+0@$t(8qb_4ztv*&py*v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.2","127.0.0.1"]
+# The dev machine's LAN IP changes whenever it switches networks (needed so the
+# phone can reach the API over Wi-Fi), which kept breaking ALLOWED_HOSTS. Since
+# this only relaxes the check while DEBUG=True, it's safe for local dev and never
+# applies in production.
+ALLOWED_HOSTS = ["*"] if DEBUG else ["192.168.1.2", "127.0.0.1"]
 
 
 # Application definition

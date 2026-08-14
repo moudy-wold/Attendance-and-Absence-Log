@@ -151,13 +151,14 @@ export function EmployeesPageContent() {
                 <th className="px-4 py-3 text-start font-medium">{t('employees.role')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('employees.type')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('employees.status')}</th>
+                <th className="px-4 py-3 text-start font-medium" />
               </tr>
             </thead>
             <tbody>
               {employees === null &&
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-3.5" colSpan={5}>
+                    <td className="px-4 py-3.5" colSpan={6}>
                       <div className="h-4 w-full animate-pulse rounded bg-neutral-100" />
                     </td>
                   </tr>
@@ -165,7 +166,7 @@ export function EmployeesPageContent() {
 
               {employees !== null && employees.length === 0 && (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={5}>
+                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={6}>
                     {t('employees.empty')}
                   </td>
                 </tr>
@@ -174,8 +175,7 @@ export function EmployeesPageContent() {
               {employees?.map((employee) => (
                 <tr
                   key={employee.id}
-                  onClick={() => navigate(`/employees/${employee.id}`)}
-                  className="cursor-pointer border-b border-neutral-100 transition-colors last:border-0 hover:bg-neutral-50"
+                  className="border-b border-neutral-100 transition-colors last:border-0 hover:bg-neutral-50"
                 >
                   <td className="px-4 py-3.5 font-medium text-neutral-800">{employee.fullName}</td>
                   <td className="px-4 py-3.5 text-neutral-500">{employee.phone || '—'}</td>
@@ -195,6 +195,24 @@ export function EmployeesPageContent() {
                     <Badge tone={employee.isActive ? 'green' : 'red'}>
                       {employee.isActive ? t('employees.active') : t('employees.suspended')}
                     </Badge>
+                  </td>
+                  <td className="px-4 py-3.5 text-end">
+                    <button
+                      type="button"
+                      aria-label={t('employees.edit')}
+                      onClick={() => navigate(`/employees/${employee.id}`)}
+                      className="flex size-8 shrink-0 items-center justify-center rounded-lg border-[1px] border-neutral-200 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+                        <path
+                          d="M12.9 3.4a1.5 1.5 0 0 1 2.12 0l1.58 1.58a1.5 1.5 0 0 1 0 2.12L7.5 16.2l-3.7.8.8-3.7L12.9 3.4Z"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}

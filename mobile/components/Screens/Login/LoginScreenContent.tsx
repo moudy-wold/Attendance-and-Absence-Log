@@ -42,8 +42,8 @@ export function LoginScreenContent() {
 
   function validate(): Partial<Record<keyof LoginForm, string>> {
     const next: Partial<Record<keyof LoginForm, string>> = {}
-    if (!form.username.trim()) next.username = t('auth.usernameRequired')
-    if (!form.password) next.password = t('auth.passwordRequired')
+    if (!form.username.trim()) next.username = t('Please enter your username or phone number')
+    if (!form.password) next.password = t('Please enter your password')
     return next
   }
 
@@ -69,8 +69,8 @@ export function LoginScreenContent() {
     } catch (error) {
       const message =
         isAxiosError(error) && error.response?.status === 401
-          ? t('auth.invalidCredentials')
-          : extractApiError(error, t('common.unexpectedError'))
+          ? t('Invalid username or password')
+          : extractApiError(error, t('Something went wrong, please try again'))
       setTopError(message)
       Toast.show({ type: 'error', text1: message })
     } finally {
@@ -84,7 +84,7 @@ export function LoginScreenContent() {
     logout()
     setMustChangePassword(false)
     setForm(initialForm)
-    Toast.show({ type: 'success', text1: t('changePassword.pleaseSignInAgain') })
+    Toast.show({ type: 'success', text1: t('Password changed — please sign in again with your new password.') })
   }
 
   if (mustChangePassword) {
@@ -106,7 +106,7 @@ export function LoginScreenContent() {
         style={tw`gap-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900`}
       >
         <Text style={tw`text-lg font-semibold text-neutral-900 dark:text-white`}>
-          {t('auth.loginTitle')}
+          {t('Login')}
         </Text>
 
         {topError && (
@@ -116,7 +116,7 @@ export function LoginScreenContent() {
         )}
 
         <TextField
-          label={t('auth.username')}
+          label={t('Username or phone number')}
           value={form.username}
           onChangeText={handleChange('username')}
           error={errors.username}
@@ -127,7 +127,7 @@ export function LoginScreenContent() {
         />
 
         <PasswordField
-          label={t('auth.password')}
+          label={t('Password')}
           value={form.password}
           onChangeText={handleChange('password')}
           error={errors.password}
@@ -135,7 +135,7 @@ export function LoginScreenContent() {
         />
 
         <Button onPress={handleSubmit} loading={isSubmitting}>
-          {t('auth.submit')}
+          {t('Sign in')}
         </Button>
       </View>
     </KeyboardAwareScrollView>

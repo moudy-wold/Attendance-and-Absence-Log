@@ -46,6 +46,7 @@ export default {
     pageIndicator: 'Page {{page}} of {{totalPages}} · {{count}} total',
     prevPage: 'Previous',
     nextPage: 'Next',
+    edit: 'Edit',
     form: {
       title: 'New account',
       accountType: 'Account type',
@@ -96,6 +97,15 @@ export default {
     create: '+ New kiosk account',
     device: 'Device',
     empty: 'No kiosk accounts yet',
+    edit: 'Edit',
+  },
+  entryAccountDetail: {
+    infoSectionTitle: 'Account info',
+    email: 'Email (optional)',
+    passwordSectionTitle: 'Change password',
+    newPassword: 'New password',
+    changePasswordSubmit: 'Update password',
+    passwordUpdated: 'Password updated',
   },
   changePassword: {
     title: 'Set a new password',

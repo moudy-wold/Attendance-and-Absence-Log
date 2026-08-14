@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '../../Global/LanguageSwitcher'
 import { useAuth } from '../../../context/authContextValue'
 import { tw } from '../../../lib/tw'
 
+/** The logged-in employee's own home screen — Scan / History / Stats. Admins get AdminHomeScreenContent instead. */
 export function HomeScreenContent() {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
@@ -18,32 +19,22 @@ export function HomeScreenContent() {
       </View>
 
       <Text style={tw`text-sm text-neutral-500`}>
-        {user?.isEmployee
-          ? user.isRegular
-            ? t('home.regular')
-            : t('home.irregular')
-          : t('home.roleAdmin')}
+        {user?.isRegular ? t('Regular') : t('Irregular')}
         {user?.phone ? ` · ${user.phone}` : ''}
       </Text>
 
-      {user?.isEmployee ? (
-        <View style={tw`gap-3`}>
-          <Button onPress={() => router.push('/scan')}>{t('home.scan')}</Button>
-          <Button variant="secondary" onPress={() => router.push('/history')}>
-            {t('home.history')}
-          </Button>
-          <Button variant="secondary" onPress={() => router.push('/stats')}>
-            {t('stats.title')}
-          </Button>
-        </View>
-      ) : (
-        <View style={tw`rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900`}>
-          <Text style={tw`text-sm text-neutral-500`}>{t('home.viewOnlyNotice')}</Text>
-        </View>
-      )}
+      <View style={tw`gap-3`}>
+        <Button onPress={() => router.push('/scan')}>{t('Scan attendance code')}</Button>
+        <Button variant="secondary" onPress={() => router.push('/history')}>
+          {t('My attendance')}
+        </Button>
+        <Button variant="secondary" onPress={() => router.push('/stats')}>
+          {t('My statistics')}
+        </Button>
+      </View>
 
       <Button style={tw`mt-auto self-start px-4`} onPress={logout}>
-        {t('auth.logout')}
+        {t('Sign out')}
       </Button>
     </View>
   )

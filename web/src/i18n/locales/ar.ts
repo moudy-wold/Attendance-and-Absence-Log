@@ -48,6 +48,7 @@ export default {
     pageIndicator: 'صفحة {{page}} من {{totalPages}} · {{count}} إجمالي',
     prevPage: 'السابق',
     nextPage: 'التالي',
+    edit: 'تعديل',
     form: {
       title: 'حساب جديد',
       accountType: 'نوع الحساب',
@@ -98,6 +99,15 @@ export default {
     create: '+ حساب شاشة دخول جديد',
     device: 'الجهاز',
     empty: 'لا يوجد حسابات شاشات دخول بعد',
+    edit: 'تعديل',
+  },
+  entryAccountDetail: {
+    infoSectionTitle: 'معلومات الحساب',
+    email: 'البريد الإلكتروني (اختياري)',
+    passwordSectionTitle: 'تغيير كلمة المرور',
+    newPassword: 'كلمة المرور الجديدة',
+    changePasswordSubmit: 'تحديث كلمة المرور',
+    passwordUpdated: 'تم تحديث كلمة المرور',
   },
   changePassword: {
     title: 'حدّد كلمة مرور جديدة',
