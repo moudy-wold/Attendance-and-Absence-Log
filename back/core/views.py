@@ -87,12 +87,27 @@ class ValidateQRView(APIView):
 
 
 def _check_in(user, qr_token: QRToken) -> tuple[Attendance | None, str | None]:
-    """ينشئ جلسة جديدة. القيد الفريد الشرطي على الموديل يمنع أي جلسة مفتوحة ثانية بنفس اليوم حتى تحت التزامن."""
+    """ينشئ جلسة جديدة، بشرط مرور الحد الأدنى الزمني منذ آخر خروج لنفس اليوم (إن وجد)
+    لمنع تسجيل دخول فوري بعد الخروج بالغلط (مثلاً بسبب مسح مزدوج سريع للرمز).
+    القيد الفريد الشرطي على الموديل يمنع أي جلسة مفتوحة ثانية بنفس اليوم حتى تحت التزامن."""
+    today = timezone.localdate()
+    last_checkout = (
+        Attendance.objects.filter(user=user, date=today, check_out__isnull=False)
+        .order_by("-check_out")
+        .first()
+    )
+    if last_checkout is not None:
+        min_seconds = SystemSettings.get_solo().min_session_duration_seconds
+        elapsed = (timezone.now() - last_checkout.check_out).total_seconds()
+        if elapsed < min_seconds:
+            remaining = int(min_seconds - elapsed)
+            return None, f"Please wait {remaining} more second(s) before checking in again."
+
     try:
         with transaction.atomic():
             attendance = Attendance.objects.create(
                 user=user,
-                date=timezone.localdate(),
+                date=today,
                 check_in=timezone.now(),
                 qr_token=qr_token,
             )

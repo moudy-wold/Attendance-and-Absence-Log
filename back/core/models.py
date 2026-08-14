@@ -21,7 +21,10 @@ class SystemSettings(models.Model):
     )
     min_session_duration_seconds = models.PositiveIntegerField(
         default=60,
-        help_text="أقل مدة مسموحة بين تسجيل الدخول والخروج لنفس الجلسة — يمنع تسجيل خروج فوري بعد الدخول مباشرة",
+        help_text=(
+            "أقل مدة مسموحة بين تسجيل الدخول والخروج لنفس الجلسة، وأيضًا بين الخروج وتسجيل دخول جديد بعده — "
+            "يمنع تسجيل خروج فوري بعد الدخول، أو دخول فوري بعد الخروج، بالغلط"
+        ),
     )
     work_start_time = models.TimeField(
         default=datetime.time(9, 0),
