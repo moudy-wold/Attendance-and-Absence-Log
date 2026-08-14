@@ -1,97 +1,126 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { getEmployee, updateUser, exportEmployeeAttendance } from '../../../api/admin'
+import { getUser, updateUser } from '../../../api/admin'
 import { mapUser, type User } from '../../../types/user'
-import { mapAttendance, type Attendance } from '../../../types/attendance'
 import { extractApiError } from '../../../lib/apiError'
 import { AdminHeader } from '../../Global/AdminHeader'
 import { Badge } from '../../Global/Badge'
 import { Switch } from '../../Global/Switch'
+import { TextField } from '../../Global/TextField'
+import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
+import { ConfirmDialog } from '../../Global/ConfirmDialog'
 
-function monthLabel(year: number, month: number, locale: string) {
-  return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
-    new Date(year, month - 1, 1),
-  )
+interface InfoForm {
+  firstName: string
+  lastName: string
+  phone: string
+  email: string
 }
 
-function formatTime(iso: string | null, locale: string) {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+interface PasswordForm {
+  newPassword: string
 }
 
-function formatDate(iso: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(new Date(iso))
-}
+const initialPasswordForm: PasswordForm = { newPassword: '' }
 
 export function EmployeeDetailPageContent() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const employeeId = Number(id)
 
-  const now = new Date()
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth() + 1)
-
   const [employee, setEmployee] = useState<User | null>(null)
-  const [attendance, setAttendance] = useState<Attendance[] | null>(null)
-  const [isExporting, setIsExporting] = useState(false)
+  const [infoForm, setInfoForm] = useState<InfoForm | null>(null)
+  const [isSavingInfo, setIsSavingInfo] = useState(false)
+  const [isResetDeviceConfirmOpen, setIsResetDeviceConfirmOpen] = useState(false)
+
+  const [passwordForm, setPasswordForm] = useState<PasswordForm>(initialPasswordForm)
+  const [passwordErrors, setPasswordErrors] = useState<Partial<Record<keyof PasswordForm, string>>>({})
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
 
   const load = useCallback(() => {
-    setAttendance(null)
-    getEmployee(employeeId, year, month)
+    getUser(employeeId)
       .then(({ data }) => {
-        const { attendance: rawAttendance, ...rawUser } = data
-        setEmployee(mapUser(rawUser))
-        setAttendance(rawAttendance.map(mapAttendance))
+        const mapped = mapUser(data)
+        setEmployee(mapped)
+        setInfoForm({
+          firstName: mapped.firstName,
+          lastName: mapped.lastName,
+          phone: mapped.phone,
+          email: mapped.email ?? '',
+        })
       })
-      .catch((error) => toast.error(extractApiError(error, t('common.unexpectedError'))))
-  }, [employeeId, year, month, t])
+      .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
+  }, [employeeId, t])
 
   useEffect(() => {
     load()
   }, [load])
-
-  function changeMonth(delta: number) {
-    const next = new Date(year, month - 1 + delta, 1)
-    setYear(next.getFullYear())
-    setMonth(next.getMonth() + 1)
-  }
 
   async function handleUpdate(payload: Parameters<typeof updateUser>[1]) {
     if (!employee) return
     try {
       const { data } = await updateUser(employee.id, payload)
       setEmployee(mapUser(data))
-      toast.success(t('employeeDetail.updateSuccess'))
+      toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     }
   }
 
   async function handleResetDevice() {
-    if (!window.confirm(t('employeeDetail.resetDeviceConfirm'))) return
+    setIsResetDeviceConfirmOpen(false)
     await handleUpdate({ device_id: null })
-    toast.success(t('employeeDetail.resetDeviceSuccess'))
+    toast.success(t('Device unbound'))
   }
 
-  async function handleExport() {
-    setIsExporting(true)
+  async function handleSaveInfo(e: FormEvent) {
+    e.preventDefault()
+    if (!infoForm) return
+
+    setIsSavingInfo(true)
     try {
-      const { data } = await exportEmployeeAttendance(employeeId, year, month)
-      const url = URL.createObjectURL(data)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `attendance-${employee?.username ?? employeeId}-${year}-${month}.xlsx`
-      link.click()
-      URL.revokeObjectURL(url)
+      const { data } = await updateUser(employeeId, {
+        first_name: infoForm.firstName.trim(),
+        last_name: infoForm.lastName.trim(),
+        phone: infoForm.phone.trim(),
+        email: infoForm.email.trim() || undefined,
+      })
+      setEmployee(mapUser(data))
+      toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
-      setIsExporting(false)
+      setIsSavingInfo(false)
+    }
+  }
+
+  function validatePassword(): Partial<Record<keyof PasswordForm, string>> {
+    const next: Partial<Record<keyof PasswordForm, string>> = {}
+    if (passwordForm.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
+    else if (/^\d+$/.test(passwordForm.newPassword)) next.newPassword = t('Password cannot be numbers only')
+    return next
+  }
+
+  async function handleSavePassword(e: FormEvent) {
+    e.preventDefault()
+
+    const validationErrors = validatePassword()
+    setPasswordErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) return
+
+    setIsSavingPassword(true)
+    try {
+      await updateUser(employeeId, { password: passwordForm.newPassword })
+      toast.success(t('Password updated'))
+      setPasswordForm(initialPasswordForm)
+    } catch (error) {
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
+    } finally {
+      setIsSavingPassword(false)
     }
   }
 
@@ -99,7 +128,7 @@ export function EmployeeDetailPageContent() {
     <div className="flex min-h-full flex-col bg-neutral-50">
       <AdminHeader title={employee?.fullName ?? '…'} onBack={() => navigate('/employees')} />
 
-      {!employee ? (
+      {!employee || !infoForm ? (
         <div className="p-6">
           <div className="h-24 w-full animate-pulse rounded-xl bg-neutral-100" />
         </div>
@@ -108,123 +137,115 @@ export function EmployeeDetailPageContent() {
           <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-5">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-semibold text-neutral-900">{employee.fullName}</h2>
-              <Badge tone="neutral">{employee.isEntry ? t('employees.roleEntry') : t('employees.roleEmployee')}</Badge>
+              <Badge tone="neutral">{t('Employee')}</Badge>
             </div>
-            <p className="text-sm text-neutral-500">
-              {employee.username} · {employee.phone || '—'}
-            </p>
+            <p className="text-sm text-neutral-500">{employee.username}</p>
 
             <Switch
-              label={t('employeeDetail.activeToggleLabel')}
-              description={t('employeeDetail.activeToggleDescription')}
+              label={t('Account active')}
+              description={t('When off, this person cannot log in or use the app at all')}
               checked={employee.isActive}
               onChange={(checked) => handleUpdate({ is_active: checked })}
             />
 
-            {employee.isEmployee && (
-              <Switch
-                label={t('employees.regular')}
-                description={t('employeeDetail.regularToggleDescription')}
-                checked={employee.isRegular}
-                onChange={(checked) => handleUpdate({ is_regular: checked })}
-              />
-            )}
+            <Switch
+              label={t('Regular')}
+              description={t('Registered with the labor syndicate')}
+              checked={employee.isRegular}
+              onChange={(checked) => handleUpdate({ is_regular: checked })}
+            />
 
             <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 px-3.5 py-3">
               <span className="flex flex-col">
-                <span className="text-sm font-medium text-neutral-800">{t('employeeDetail.deviceSection')}</span>
+                <span className="text-sm font-medium text-neutral-800">{t('Bound device')}</span>
                 <span className="text-xs text-neutral-500">
-                  {employee.deviceId ? t('employeeDetail.deviceBound') : t('employeeDetail.deviceNotBound')}
+                  {employee.deviceId ? t('Bound to a device') : t('Not bound to any device yet')}
                 </span>
               </span>
               {employee.deviceId && (
                 <button
                   type="button"
-                  onClick={handleResetDevice}
+                  onClick={() => setIsResetDeviceConfirmOpen(true)}
                   className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
                 >
-                  {t('employeeDetail.resetDevice')}
+                  {t('Allow login from a new device')}
                 </button>
               )}
             </div>
           </section>
 
-          <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => changeMonth(-1)}
-                  aria-label={t('common.back')}
-                  className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" className="size-3.5 rtl:-scale-x-100" aria-hidden="true">
-                    <path d="M12.5 15 7.5 10l5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <span className="w-32 text-center text-sm font-medium text-neutral-800">
-                  {monthLabel(year, month, i18n.language)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => changeMonth(1)}
-                  aria-label={t('common.back')}
-                  className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" className="size-3.5 -scale-x-100 rtl:scale-x-100" aria-hidden="true">
-                    <path d="M12.5 15 7.5 10l5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
-              <Button
-                onClick={handleExport}
-                loading={isExporting}
-                className="w-fit px-3 py-1.5 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 hover:bg-neutral-50"
-              >
-                {t('employeeDetail.export')}
-              </Button>
+          <form
+            onSubmit={handleSaveInfo}
+            className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5"
+          >
+            <h2 className="text-sm font-semibold text-neutral-800">{t('Account info')}</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                label={t('First name')}
+                value={infoForm.firstName}
+                onChange={(e) => setInfoForm({ ...infoForm, firstName: e.target.value })}
+              />
+              <TextField
+                label={t('Last name')}
+                value={infoForm.lastName}
+                onChange={(e) => setInfoForm({ ...infoForm, lastName: e.target.value })}
+              />
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-neutral-100">
-              <table className="w-full text-start text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-100 bg-neutral-50 text-xs text-neutral-500">
-                    <th className="px-3 py-2.5 text-start font-medium">{t('employeeDetail.tableDate')}</th>
-                    <th className="px-3 py-2.5 text-start font-medium">{t('employeeDetail.tableCheckIn')}</th>
-                    <th className="px-3 py-2.5 text-start font-medium">{t('employeeDetail.tableCheckOut')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance === null &&
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <tr key={i} className="border-b border-neutral-50 last:border-0">
-                        <td className="px-3 py-3" colSpan={3}>
-                          <div className="h-3.5 w-full animate-pulse rounded bg-neutral-100" />
-                        </td>
-                      </tr>
-                    ))}
+            <TextField
+              label={t('Phone number')}
+              value={infoForm.phone}
+              onChange={(e) => setInfoForm({ ...infoForm, phone: e.target.value })}
+              type="tel"
+            />
 
-                  {attendance !== null && attendance.length === 0 && (
-                    <tr>
-                      <td className="px-3 py-6 text-center text-sm text-neutral-400" colSpan={3}>
-                        {t('employeeDetail.noAttendance')}
-                      </td>
-                    </tr>
-                  )}
+            <TextField
+              label={t('Email (optional)')}
+              value={infoForm.email}
+              onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
+              type="email"
+            />
 
-                  {attendance?.map((record) => (
-                    <tr key={record.id} className="border-b border-neutral-50 last:border-0">
-                      <td className="px-3 py-2.5 text-neutral-700">{formatDate(record.date, i18n.language)}</td>
-                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(record.checkIn, i18n.language)}</td>
-                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(record.checkOut, i18n.language)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+            <Button type="submit" loading={isSavingInfo} className="mt-1 w-fit px-5">
+              {t('Save')}
+            </Button>
+          </form>
+
+          <form
+            onSubmit={handleSavePassword}
+            className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5"
+          >
+            <h2 className="text-sm font-semibold text-neutral-800">{t('Change password')}</h2>
+
+            <PasswordField
+              label={t('New password')}
+              value={passwordForm.newPassword}
+              onChange={(e) => {
+                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                setPasswordErrors({ ...passwordErrors, newPassword: undefined })
+              }}
+              error={passwordErrors.newPassword}
+              autoComplete="new-password"
+            />
+
+            <Button type="submit" loading={isSavingPassword} className="mt-1 w-fit px-5">
+              {t('Update password')}
+            </Button>
+          </form>
         </div>
       )}
+
+      <ConfirmDialog
+        open={isResetDeviceConfirmOpen}
+        description={t(
+          'Unbind this account from its current device? They will be able to log in from a new device next time.',
+        )}
+        confirmText={t('Unbind')}
+        variant="danger"
+        onConfirm={handleResetDevice}
+        onCancel={() => setIsResetDeviceConfirmOpen(false)}
+      />
     </div>
   )
 }

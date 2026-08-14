@@ -59,20 +59,20 @@ export function KioskPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('kiosk.title')} />
+      <AdminHeader title={t('Attendance kiosk')} />
 
       <div className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
         <div className="flex aspect-square w-72 max-w-full items-center justify-center rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           {qrToken ? (
             <QRCodeSVG value={qrToken.token} size={256} className="h-full w-full" />
           ) : (
-            <span className="text-sm text-neutral-400">{hasError ? t('kiosk.error') : t('kiosk.generating')}</span>
+            <span className="text-sm text-neutral-400">{hasError ? t('Could not generate a code, retrying…') : t('Generating…')}</span>
           )}
         </div>
 
         {qrToken && (
           <p className="text-sm text-neutral-500">
-            {t('kiosk.expiresLabel')} {secondsLeft}s
+            {t('Refreshes in')} {secondsLeft}s
           </p>
         )}
       </div>

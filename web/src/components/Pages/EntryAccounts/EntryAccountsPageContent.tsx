@@ -10,6 +10,7 @@ import { Badge } from '../../Global/Badge'
 import { Button } from '../../Global/Button'
 import { TextField } from '../../Global/TextField'
 import { SelectField } from '../../Global/Select'
+import { ConfirmDialog } from '../../Global/ConfirmDialog'
 
 type TriState = 'all' | 'yes' | 'no'
 
@@ -24,6 +25,7 @@ export function EntryAccountsPageContent() {
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<TriState>('all')
   const [pendingId, setPendingId] = useState<number | null>(null)
+  const [resetDeviceUser, setResetDeviceUser] = useState<User | null>(null)
 
   const pageSize = 10
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
@@ -51,7 +53,7 @@ export function EntryAccountsPageContent() {
         setCount(data.count)
       })
       .catch((error) => {
-        if (!cancelled) toast.error(extractApiError(error, t('common.unexpectedError')))
+        if (!cancelled) toast.error(extractApiError(error, t('Something went wrong, please try again')))
       })
 
     return () => {
@@ -66,22 +68,24 @@ export function EntryAccountsPageContent() {
       const updated = mapUser(data)
       setEntryUsers((prev) => prev?.map((u) => (u.id === updated.id ? updated : u)) ?? prev)
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setPendingId(null)
     }
   }
 
-  async function handleResetDevice(user: User) {
-    if (!window.confirm(t('employeeDetail.resetDeviceConfirm'))) return
+  async function handleResetDevice() {
+    if (!resetDeviceUser) return
+    const user = resetDeviceUser
+    setResetDeviceUser(null)
     setPendingId(user.id)
     try {
       const { data } = await updateUser(user.id, { device_id: null })
       const updated = mapUser(data)
       setEntryUsers((prev) => prev?.map((u) => (u.id === updated.id ? updated : u)) ?? prev)
-      toast.success(t('employeeDetail.resetDeviceSuccess'))
+      toast.success(t('Device unbound'))
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setPendingId(null)
     }
@@ -89,36 +93,36 @@ export function EntryAccountsPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('entryAccounts.title')} />
+      <AdminHeader title={t('Kiosk accounts')} />
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full max-w-xs">
               <TextField
-                label={t('employees.search')}
+                label={t('Search')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('employees.searchPlaceholder')}
+                placeholder={t('Name, username or phone')}
               />
             </div>
             <div className="w-40">
               <SelectField
-                label={t('employees.status')}
+                label={t('Status')}
                 value={activeFilter}
                 onChange={(e) => {
                   setActiveFilter(e.target.value as TriState)
                   setPage(1)
                 }}
               >
-                <option value="all">{t('employees.filterAll')}</option>
-                <option value="yes">{t('employees.active')}</option>
-                <option value="no">{t('employees.suspended')}</option>
+                <option value="all">{t('All')}</option>
+                <option value="yes">{t('Active')}</option>
+                <option value="no">{t('Suspended')}</option>
               </SelectField>
             </div>
           </div>
           <Button className="w-fit px-4" onClick={() => navigate('/employees/new')}>
-            {t('entryAccounts.create')}
+            {t('+ New kiosk account')}
           </Button>
         </div>
 
@@ -126,11 +130,11 @@ export function EntryAccountsPageContent() {
           <table className="w-full text-start text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
-                <th className="px-4 py-3 text-start font-medium">{t('employees.name')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.phone')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('entryAccounts.device')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('active/inactive')}</th>
-                <th className="px-4 py-3 text-start font-medium" />
+                <th className="px-4 py-3 text-start font-medium">{t('Name')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Device')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Active/Inactive')}</th>
+                <th className="px-4 py-3 text-start font-medium" >{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -146,7 +150,7 @@ export function EntryAccountsPageContent() {
               {entryUsers !== null && entryUsers.length === 0 && (
                 <tr>
                   <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={5}>
-                    {t('entryAccounts.empty')}
+                    {t('No kiosk accounts yet')}
                   </td>
                 </tr>
               )}
@@ -160,7 +164,7 @@ export function EntryAccountsPageContent() {
                   <td className="px-4 py-3.5 text-neutral-500">{user.phone || '—'}</td>
                   <td className="px-4 py-3.5">
                     <Badge tone={user.deviceId ? 'green' : 'neutral'}>
-                      {user.deviceId ? t('employeeDetail.deviceBound') : t('employeeDetail.deviceNotBound')}
+                      {user.deviceId ? t('Bound to a device') : t('Not bound to any device yet')}
                     </Badge>
                   </td>
                   <td className="px-4 py-3.5">
@@ -183,20 +187,20 @@ export function EntryAccountsPageContent() {
                     </button>
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-2">
-                      {user.deviceId && (
+                    <div className="flex items-center justify-start gap-2">
+                      {/* {user.deviceId && (
                         <button
                           type="button"
                           disabled={pendingId === user.id}
-                          onClick={() => handleResetDevice(user)}
+                          onClick={() => setResetDeviceUser(user)}
                           className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-50"
                         >
-                          {t('employeeDetail.resetDevice')}
+                          {t('Allow login from a new device')}
                         </button>
-                      )}
+                      )} */}
                       <button
                         type="button"
-                        aria-label={t('entryAccounts.edit')}
+                        aria-label={t('Edit')}
                         onClick={() => navigate(`/entry-accounts/${user.id}`)}
                         className="flex  size-8 shrink-0 items-center justify-center border border-gray-200 rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
                       >
@@ -220,7 +224,7 @@ export function EntryAccountsPageContent() {
 
         {count > pageSize && (
           <div className="flex items-center justify-between text-sm text-neutral-500">
-            <span>{t('employees.pageIndicator', { page, totalPages, count })}</span>
+            <span>{t('Page {{page}} of {{totalPages}} · {{count}} total', { page, totalPages, count })}</span>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -228,7 +232,7 @@ export function EntryAccountsPageContent() {
                 onClick={() => setPage((p) => p - 1)}
                 className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-40"
               >
-                {t('employees.prevPage')}
+                {t('Previous')}
               </button>
               <button
                 type="button"
@@ -236,12 +240,23 @@ export function EntryAccountsPageContent() {
                 onClick={() => setPage((p) => p + 1)}
                 className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-40"
               >
-                {t('employees.nextPage')}
+                {t('Next')}
               </button>
             </div>
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={resetDeviceUser !== null}
+        description={t(
+          'Unbind this account from its current device? They will be able to log in from a new device next time.',
+        )}
+        confirmText={t('Unbind')}
+        variant="danger"
+        onConfirm={handleResetDevice}
+        onCancel={() => setResetDeviceUser(null)}
+      />
     </div>
   )
 }

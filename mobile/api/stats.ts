@@ -5,6 +5,11 @@ export interface DailyLateMinutes {
   late_minutes: number
 }
 
+export interface DailyEarlyLeaveMinutes {
+  date: string
+  early_leave_minutes: number
+}
+
 export interface EmployeeStats {
   year: number
   month: number
@@ -12,8 +17,10 @@ export interface EmployeeStats {
   present_days: number
   absent_days: number
   late_minutes: number
+  early_leave_minutes: number
   on_time_rate: number
   daily_late_minutes: DailyLateMinutes[]
+  daily_early_leave_minutes: DailyEarlyLeaveMinutes[]
 }
 
 export async function getMyStats() {
@@ -45,9 +52,11 @@ export interface AdminStatsOverview {
   total_present_days: number
   total_absent_days: number
   total_late_minutes: number
+  total_early_leave_minutes: number
   daily_trend: DailyAttendanceCount[]
   top_late: TopEmployeeStat[]
   top_absent: TopEmployeeStat[]
+  top_early_leave: TopEmployeeStat[]
 }
 
 export async function getAdminStatsOverview(year: number, month: number) {

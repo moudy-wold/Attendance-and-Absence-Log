@@ -25,9 +25,11 @@ export interface AdminStatsOverview {
   total_present_days: number
   total_absent_days: number
   total_late_minutes: number
+  total_early_leave_minutes: number
   daily_trend: DailyAttendanceCount[]
   top_late: TopEmployeeStat[]
   top_absent: TopEmployeeStat[]
+  top_early_leave: TopEmployeeStat[]
 }
 
 export async function getAdminStatsOverview(year: number, month: number) {

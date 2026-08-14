@@ -48,10 +48,10 @@ function SettingsIcon() {
 }
 
 const navItems = [
-  { to: '/', end: true, labelKey: 'sidebar.stats', Icon: StatsIcon },
-  { to: '/employees', end: false, labelKey: 'sidebar.employees', Icon: EmployeesIcon },
-  { to: '/entry-accounts', end: false, labelKey: 'sidebar.entryAccounts', Icon: EntryAccountsIcon },
-  { to: '/settings', end: false, labelKey: 'sidebar.settings', Icon: SettingsIcon },
+  { to: '/', end: true, labelKey: 'Statistics', Icon: StatsIcon },
+  { to: '/employees', end: false, labelKey: 'Employees', Icon: EmployeesIcon },
+  { to: '/entry-accounts', end: false, labelKey: 'Kiosk accounts', Icon: EntryAccountsIcon },
+  { to: '/settings', end: false, labelKey: 'Settings', Icon: SettingsIcon },
 ] as const
 
 export function Sidebar() {
@@ -76,14 +76,14 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          aria-label={t('sidebar.toggleMenu')}
+          aria-label={t('Toggle menu')}
           className="flex size-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
         >
           <svg viewBox="0 0 20 20" fill="none" className="size-5" aria-hidden="true">
             <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-neutral-900">{t('sidebar.title')}</span>
+        <span className="text-sm font-semibold text-neutral-900">{t('Admin panel')}</span>
         <div className="size-9" />
       </div>
 
@@ -101,7 +101,7 @@ export function Sidebar() {
         }`}
       >
         <div className="hidden items-center px-5 py-5 md:flex">
-          <span className="text-base font-semibold text-neutral-900">{t('sidebar.title')}</span>
+          <span className="text-base font-semibold text-neutral-900">{t('Admin panel')}</span>
         </div>
         <div className="h-14 md:hidden" />
 
@@ -122,7 +122,7 @@ export function Sidebar() {
             onClick={handleLogout}
             className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
           >
-            {t('auth.logout')}
+            {t('Sign out')}
           </button>
         </div>
       </aside>

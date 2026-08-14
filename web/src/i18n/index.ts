@@ -31,6 +31,12 @@ i18n
     fallbackLng: 'ar',
     supportedLngs: supportedLanguages,
     interpolation: { escapeValue: false },
+    // Keys are literal English sentences (e.g. "If left empty, the phone number
+    // will be used as the password."), not dot-namespaced paths — disable
+    // i18next's default splitting so punctuation inside a key is never
+    // misread as nesting.
+    keySeparator: false,
+    nsSeparator: false,
   })
 
 i18n.on('languageChanged', applyDocumentDirection)

@@ -54,7 +54,7 @@ export function EmployeesPageContent() {
         setCount(data.count)
       })
       .catch((error) => {
-        if (!cancelled) toast.error(extractApiError(error, t('common.unexpectedError')))
+        if (!cancelled) toast.error(extractApiError(error, t('Something went wrong, please try again')))
       })
 
     return () => {
@@ -78,7 +78,7 @@ export function EmployeesPageContent() {
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setIsExporting(false)
     }
@@ -86,45 +86,45 @@ export function EmployeesPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('employees.title')} />
+      <AdminHeader title={t('Employees')} />
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full max-w-xs">
               <TextField
-                label={t('employees.search')}
+                label={t('Search')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('employees.searchPlaceholder')}
+                placeholder={t('Name, username or phone')}
               />
             </div>
             <div className="w-40">
               <SelectField
-                label={t('employees.type')}
+                label={t('Type')}
                 value={regularFilter}
                 onChange={(e) => {
                   setRegularFilter(e.target.value as TriState)
                   setPage(1)
                 }}
               >
-                <option value="all">{t('employees.filterAll')}</option>
-                <option value="yes">{t('employees.regular')}</option>
-                <option value="no">{t('employees.irregular')}</option>
+                <option value="all">{t('All')}</option>
+                <option value="yes">{t('Regular')}</option>
+                <option value="no">{t('Irregular')}</option>
               </SelectField>
             </div>
             <div className="w-40">
               <SelectField
-                label={t('employees.status')}
+                label={t('Status')}
                 value={activeFilter}
                 onChange={(e) => {
                   setActiveFilter(e.target.value as TriState)
                   setPage(1)
                 }}
               >
-                <option value="all">{t('employees.filterAll')}</option>
-                <option value="yes">{t('employees.active')}</option>
-                <option value="no">{t('employees.suspended')}</option>
+                <option value="all">{t('All')}</option>
+                <option value="yes">{t('Active')}</option>
+                <option value="no">{t('Suspended')}</option>
               </SelectField>
             </div>
           </div>
@@ -132,12 +132,12 @@ export function EmployeesPageContent() {
             <Button
               onClick={handleExport}
               loading={isExporting}
-              className="w-fit px-4 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 hover:bg-neutral-50"
+              className="w-fit px-4 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 cursor-pointer hover:bg-neutral-600"
             >
-              {t('employees.exportExcel')}
+              {t('Export to Excel')}
             </Button>
             <Button className="w-fit px-4" onClick={() => navigate('/employees/new')}>
-              {t('employees.create')}
+              {t('+ New account')}
             </Button>
           </div>
         </div>
@@ -146,12 +146,12 @@ export function EmployeesPageContent() {
           <table className="w-full text-start text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
-                <th className="px-4 py-3 text-start font-medium">{t('employees.name')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.phone')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.role')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.type')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('employees.status')}</th>
-                <th className="px-4 py-3 text-start font-medium" />
+                <th className="px-4 py-3 text-start font-medium">{t('Name')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Role')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Type')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Status')}</th>
+                <th className="px-4 py-3 text-start font-medium" >{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -167,7 +167,7 @@ export function EmployeesPageContent() {
               {employees !== null && employees.length === 0 && (
                 <tr>
                   <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={6}>
-                    {t('employees.empty')}
+                    {t('No employees yet')}
                   </td>
                 </tr>
               )}
@@ -181,38 +181,52 @@ export function EmployeesPageContent() {
                   <td className="px-4 py-3.5 text-neutral-500">{employee.phone || '—'}</td>
                   <td className="px-4 py-3.5">
                     <Badge tone="neutral">
-                      {employee.isEntry ? t('employees.roleEntry') : t('employees.roleEmployee')}
+                      {employee.isEntry ? t('Entry kiosk') : t('Employee')}
                     </Badge>
                   </td>
                   <td className="px-4 py-3.5">
                     {employee.isEmployee && (
                       <Badge tone={employee.isRegular ? 'green' : 'amber'}>
-                        {employee.isRegular ? t('employees.regular') : t('employees.irregular')}
+                        {employee.isRegular ? t('Regular') : t('Irregular')}
                       </Badge>
                     )}
                   </td>
                   <td className="px-4 py-3.5">
                     <Badge tone={employee.isActive ? 'green' : 'red'}>
-                      {employee.isActive ? t('employees.active') : t('employees.suspended')}
+                      {employee.isActive ? t('Active') : t('Suspended')}
                     </Badge>
                   </td>
+                  {/* Start actions */}
                   <td className="px-4 py-3.5 text-end">
-                    <button
-                      type="button"
-                      aria-label={t('employees.edit')}
-                      onClick={() => navigate(`/employees/${employee.id}`)}
-                      className="flex size-8 shrink-0 items-center justify-center rounded-lg border-[1px] border-neutral-200 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
-                    >
-                      <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-                        <path
-                          d="M12.9 3.4a1.5 1.5 0 0 1 2.12 0l1.58 1.58a1.5 1.5 0 0 1 0 2.12L7.5 16.2l-3.7.8.8-3.7L12.9 3.4Z"
-                          stroke="currentColor"
-                          strokeWidth="1.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
+                    <div className="flex justify-start gap-2">
+                      <button
+                        type="button"
+                        aria-label={t('Statistics')}
+                        onClick={() => navigate(`/employees/${employee.id}/stats`)}
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg border-[1px] border-neutral-200 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+                      >
+                        <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+                          <path d="M3.5 16.5h13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                          <path d="M6 16.5v-5M10 16.5v-8M14 16.5v-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t('Edit')}
+                        onClick={() => navigate(`/employees/${employee.id}`)}
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg border-[1px] border-neutral-200 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+                      >
+                        <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+                          <path
+                            d="M12.9 3.4a1.5 1.5 0 0 1 2.12 0l1.58 1.58a1.5 1.5 0 0 1 0 2.12L7.5 16.2l-3.7.8.8-3.7L12.9 3.4Z"
+                            stroke="currentColor"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -222,7 +236,7 @@ export function EmployeesPageContent() {
 
         {count > pageSize && (
           <div className="flex items-center justify-between text-sm text-neutral-500">
-            <span>{t('employees.pageIndicator', { page, totalPages, count })}</span>
+            <span>{t('Page {{page}} of {{totalPages}} · {{count}} total', { page, totalPages, count })}</span>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -230,7 +244,7 @@ export function EmployeesPageContent() {
                 onClick={() => setPage((p) => p - 1)}
                 className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-40"
               >
-                {t('employees.prevPage')}
+                {t('Previous')}
               </button>
               <button
                 type="button"
@@ -238,7 +252,7 @@ export function EmployeesPageContent() {
                 onClick={() => setPage((p) => p + 1)}
                 className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition-colors hover:bg-neutral-50 disabled:opacity-40"
               >
-                {t('employees.nextPage')}
+                {t('Next')}
               </button>
             </div>
           </div>

@@ -13,9 +13,11 @@ export function SettingsPageContent() {
   const [qrLifetime, setQrLifetime] = useState<string>('')
   const [minSessionDuration, setMinSessionDuration] = useState<string>('')
   const [workStartTime, setWorkStartTime] = useState<string>('')
+  const [workEndTime, setWorkEndTime] = useState<string>('')
   const [error, setError] = useState<string | undefined>()
   const [minSessionError, setMinSessionError] = useState<string | undefined>()
   const [workStartTimeError, setWorkStartTimeError] = useState<string | undefined>()
+  const [workEndTimeError, setWorkEndTimeError] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -25,8 +27,9 @@ export function SettingsPageContent() {
         setQrLifetime(String(data.qr_token_lifetime_seconds))
         setMinSessionDuration(String(data.min_session_duration_seconds))
         setWorkStartTime(data.work_start_time.slice(0, 5))
+        setWorkEndTime(data.work_end_time.slice(0, 5))
       })
-      .catch((err) => toast.error(extractApiError(err, t('common.unexpectedError'))))
+      .catch((err) => toast.error(extractApiError(err, t('Something went wrong, please try again'))))
       .finally(() => setIsLoading(false))
   }, [t])
 
@@ -37,19 +40,21 @@ export function SettingsPageContent() {
     const minSessionValue = Number(minSessionDuration)
 
     const qrError =
-      !Number.isInteger(qrValue) || qrValue < 5 || qrValue > 300 ? t('settings.qrLifetimeRange') : undefined
+      !Number.isInteger(qrValue) || qrValue < 5 || qrValue > 300 ? t('Must be between 5 and 300 seconds') : undefined
     const minSessionErrorMessage =
       !Number.isInteger(minSessionValue) || minSessionValue < 0 || minSessionValue > 3600
-        ? t('settings.minSessionDurationRange')
+        ? t('Must be between 0 and 3600 seconds')
         : undefined
-    const workStartTimeErrorMessage = !workStartTime ? t('settings.workStartTimeRequired') : undefined
+    const workStartTimeErrorMessage = !workStartTime ? t('Please set the work start time') : undefined
+    const workEndTimeErrorMessage = !workEndTime ? t('Please set the work end time') : undefined
 
     setError(qrError)
     setMinSessionError(minSessionErrorMessage)
     setWorkStartTimeError(workStartTimeErrorMessage)
+    setWorkEndTimeError(workEndTimeErrorMessage)
 
-    if (qrError || minSessionErrorMessage || workStartTimeErrorMessage) {
-      toast.error(qrError ?? minSessionErrorMessage ?? workStartTimeErrorMessage!)
+    if (qrError || minSessionErrorMessage || workStartTimeErrorMessage || workEndTimeErrorMessage) {
+      toast.error(qrError ?? minSessionErrorMessage ?? workStartTimeErrorMessage ?? workEndTimeErrorMessage!)
       return
     }
 
@@ -59,10 +64,11 @@ export function SettingsPageContent() {
         qr_token_lifetime_seconds: qrValue,
         min_session_duration_seconds: minSessionValue,
         work_start_time: `${workStartTime}:00`,
+        work_end_time: `${workEndTime}:00`,
       })
-      toast.success(t('settings.saved'))
+      toast.success(t('Settings saved'))
     } catch (err) {
-      toast.error(extractApiError(err, t('common.unexpectedError')))
+      toast.error(extractApiError(err, t('Something went wrong, please try again')))
     } finally {
       setIsSaving(false)
     }
@@ -70,11 +76,12 @@ export function SettingsPageContent() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('settings.title')} />
+      <AdminHeader title={t('Settings')} />
 
       <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-md flex-col gap-4 p-6">
         {isLoading ? (
           <>
+            <div className="h-11 w-full animate-pulse rounded-lg bg-neutral-100" />
             <div className="h-11 w-full animate-pulse rounded-lg bg-neutral-100" />
             <div className="h-11 w-full animate-pulse rounded-lg bg-neutral-100" />
             <div className="h-11 w-full animate-pulse rounded-lg bg-neutral-100" />
@@ -83,7 +90,7 @@ export function SettingsPageContent() {
           <>
             <div>
               <TextField
-                label={t('settings.qrLifetimeLabel')}
+                label={t('QR code lifetime (seconds)')}
                 type="number"
                 min={5}
                 max={300}
@@ -94,12 +101,12 @@ export function SettingsPageContent() {
                 }}
                 error={error}
               />
-              <p className="mt-1.5 text-xs text-neutral-500">{t('settings.qrLifetimeHint')}</p>
+              <p className="mt-1.5 text-xs text-neutral-500">{t('How often the attendance QR code on the kiosk screen refreshes. Between 5 and 300 seconds.')}</p>
             </div>
 
             <div>
               <TextField
-                label={t('settings.minSessionDurationLabel')}
+                label={t('Minimum session duration (seconds)')}
                 type="number"
                 min={0}
                 max={3600}
@@ -110,27 +117,41 @@ export function SettingsPageContent() {
                 }}
                 error={minSessionError}
               />
-              <p className="mt-1.5 text-xs text-neutral-500">{t('settings.minSessionDurationHint')}</p>
+              <p className="mt-1.5 text-xs text-neutral-500">{t('Minimum time that must pass between check-in and check-out for the same session. Prevents an accidental double-scan from recording an instant check-out.')}</p>
             </div>
 
-            <div>
-              <TextField
-                label={t('settings.workStartTimeLabel')}
-                type="time"
-                value={workStartTime}
-                onChange={(e) => {
-                  setWorkStartTime(e.target.value)
-                  setWorkStartTimeError(undefined)
-                }}
-                error={workStartTimeError}
-              />
-              <p className="mt-1.5 text-xs text-neutral-500">{t('settings.workStartTimeHint')}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TextField
+                  label={t('Official work start time')}
+                  type="time"
+                  value={workStartTime}
+                  onChange={(e) => {
+                    setWorkStartTime(e.target.value)
+                    setWorkStartTimeError(undefined)
+                  }}
+                  error={workStartTimeError}
+                />
+              </div>
+              <div>
+                <TextField
+                  label={t('Official work end time')}
+                  type="time"
+                  value={workEndTime}
+                  onChange={(e) => {
+                    setWorkEndTime(e.target.value)
+                    setWorkEndTimeError(undefined)
+                  }}
+                  error={workEndTimeError}
+                />
+              </div>
             </div>
+            <p className="-mt-2 text-xs text-neutral-500">{t('Used to calculate late minutes in the attendance summary report.')}</p>
           </>
         )}
 
         <Button type="submit" loading={isSaving} disabled={isLoading} className="mt-2">
-          {t('common.save')}
+          {t('Save')}
         </Button>
       </form>
     </div>

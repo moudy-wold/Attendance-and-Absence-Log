@@ -22,7 +22,7 @@ export function StatsScreenContent() {
   }, [t])
 
   return (
-    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950`}>
+    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950 pt-3`}>
       <View style={tw`flex-row items-center gap-3 px-5 pb-4`}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={tw`text-sm text-neutral-500`}>{t('Back')}</Text>
@@ -38,6 +38,7 @@ export function StatsScreenContent() {
             <StatCard label={t('Days present')} value={stats.present_days} />
             <StatCard label={t('Days absent')} value={stats.absent_days} />
             <StatCard label={t('Late minutes')} value={stats.late_minutes} />
+            <StatCard label={t('Early leave minutes')} value={stats.early_leave_minutes} />
             <StatCard label={t('On-time rate')} value={`${stats.on_time_rate}%`} />
           </View>
 

@@ -37,10 +37,10 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
 
   function validate(): Partial<Record<keyof Form, string>> {
     const next: Partial<Record<keyof Form, string>> = {}
-    if (!form.oldPassword) next.oldPassword = t('changePassword.oldPasswordRequired')
-    if (form.newPassword.length < 8) next.newPassword = t('changePassword.tooShort')
-    else if (/^\d+$/.test(form.newPassword)) next.newPassword = t('changePassword.numericOnly')
-    if (form.confirmPassword !== form.newPassword) next.confirmPassword = t('changePassword.mismatch')
+    if (!form.oldPassword) next.oldPassword = t('Please enter your current password')
+    if (form.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
+    else if (/^\d+$/.test(form.newPassword)) next.newPassword = t('Password cannot be numbers only')
+    if (form.confirmPassword !== form.newPassword) next.confirmPassword = t('Passwords do not match')
     return next
   }
 
@@ -58,10 +58,10 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
     setIsSubmitting(true)
     try {
       await changePassword({ old_password: form.oldPassword, new_password: form.newPassword })
-      toast.success(t('changePassword.success'))
+      toast.success(t('Password changed'))
       onSuccess()
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setIsSubmitting(false)
     }
@@ -73,12 +73,12 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
       className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
     >
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900">{t('changePassword.title')}</h2>
-        <p className="mt-1 text-sm text-neutral-500">{t('changePassword.subtitle')}</p>
+        <h2 className="text-lg font-semibold text-neutral-900">{t('Set a new password')}</h2>
+        <p className="mt-1 text-sm text-neutral-500">{t('This is your first time signing in — choose a new password to continue.')}</p>
       </div>
 
       <PasswordField
-        label={t('changePassword.oldPassword')}
+        label={t('Current password')}
         value={form.oldPassword}
         onChange={handleChange('oldPassword')}
         error={errors.oldPassword}
@@ -86,14 +86,14 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
         readOnly={Boolean(currentPassword)}
       />
       <PasswordField
-        label={t('changePassword.newPassword')}
+        label={t('New password')}
         value={form.newPassword}
         onChange={handleChange('newPassword')}
         error={errors.newPassword}
         autoComplete="new-password"
       />
       <PasswordField
-        label={t('changePassword.confirmPassword')}
+        label={t('Confirm new password')}
         value={form.confirmPassword}
         onChange={handleChange('confirmPassword')}
         error={errors.confirmPassword}
@@ -101,7 +101,7 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
       />
 
       <Button type="submit" loading={isSubmitting} className="mt-2">
-        {t('changePassword.submit')}
+        {t('Change password')}
       </Button>
     </form>
   )

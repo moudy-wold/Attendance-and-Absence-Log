@@ -19,6 +19,7 @@ import { AdminHeader } from '../../Global/AdminHeader'
 
 const BLUE = '#2a78d6'
 const ORANGE = '#eb6834'
+const AQUA = '#1baf7a'
 const GRID_COLOR = '#e1e0d9'
 const AXIS_COLOR = '#898781'
 
@@ -72,7 +73,7 @@ export function AdminStatsPageContent() {
         if (!cancelled) setStats(data)
       })
       .catch((error) => {
-        if (!cancelled) toast.error(extractApiError(error, t('common.unexpectedError')))
+        if (!cancelled) toast.error(extractApiError(error, t('Something went wrong, please try again')))
       })
 
     return () => {
@@ -89,17 +90,18 @@ export function AdminStatsPageContent() {
   const trendData = stats?.daily_trend.map((point) => ({ ...point, day: dayOfMonth(point.date) })) ?? []
   const topLate = stats?.top_late.filter((item) => item.value > 0) ?? []
   const topAbsent = stats?.top_absent.filter((item) => item.value > 0) ?? []
+  const topEarlyLeave = stats?.top_early_leave.filter((item) => item.value > 0) ?? []
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <AdminHeader title={t('stats.title')} />
+      <AdminHeader title={t('Statistics')} />
 
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-6">
         <div className="flex items-center justify-center gap-2">
           <button
             type="button"
             onClick={() => changeMonth(-1)}
-            aria-label={t('common.back')}
+            aria-label={t('Back')}
             className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
           >
             <svg viewBox="0 0 20 20" fill="none" className="size-3.5 rtl:-scale-x-100" aria-hidden="true">
@@ -112,7 +114,7 @@ export function AdminStatsPageContent() {
           <button
             type="button"
             onClick={() => changeMonth(1)}
-            aria-label={t('common.back')}
+            aria-label={t('Back')}
             className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
           >
             <svg viewBox="0 0 20 20" fill="none" className="size-3.5 -scale-x-100 rtl:scale-x-100" aria-hidden="true">
@@ -130,27 +132,28 @@ export function AdminStatsPageContent() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatCard label={t('stats.attendanceRate')} value={`${stats.attendance_rate}%`} />
-              <StatCard label={t('stats.totalEmployees')} value={stats.total_employees} />
-              <StatCard label={t('stats.totalLateMinutes')} value={stats.total_late_minutes} />
-              <StatCard label={t('stats.totalAbsentDays')} value={stats.total_absent_days} />
+              <StatCard label={t('Attendance rate')} value={`${stats.attendance_rate}%`} />
+              <StatCard label={t('Total employees')} value={stats.total_employees} />
+              <StatCard label={t('Late minutes (total)')} value={stats.total_late_minutes} />
+              <StatCard label={t('Absent days (total)')} value={stats.total_absent_days} />
+              <StatCard label={t('Early leave minutes (total)')} value={stats.total_early_leave_minutes} />
               <StatCard
-                label={t('stats.regularVsIrregular')}
+                label={t('Regular employees')}
                 value={stats.regular_count}
-                sub={t('stats.outOfTotal', { irregular: stats.irregular_count })}
+                sub={t('{{irregular}} irregular', { irregular: stats.irregular_count })}
               />
               <StatCard
-                label={t('stats.activeVsSuspended')}
+                label={t('Active employees')}
                 value={stats.active_count}
-                sub={t('stats.suspendedCount', { count: stats.suspended_count })}
+                sub={t('{{count}} suspended', { count: stats.suspended_count })}
               />
-              <StatCard label={t('stats.entryAccounts')} value={stats.entry_account_count} />
-              <StatCard label={t('stats.workingDays')} value={stats.working_days} />
+              <StatCard label={t('Kiosk accounts')} value={stats.entry_account_count} />
+              <StatCard label={t('Working days this month')} value={stats.working_days} />
             </div>
 
-            <ChartCard title={t('stats.dailyTrendTitle')}>
+            <ChartCard title={t('Daily attendance trend')}>
               {trendData.length === 0 ? (
-                <EmptyChartState label={t('stats.noData')} />
+                <EmptyChartState label={t('No data for this month yet')} />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={trendData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -169,8 +172,8 @@ export function AdminStatsPageContent() {
                       width={28}
                     />
                     <Tooltip
-                      formatter={(value) => [value, t('stats.presentCount')]}
-                      labelFormatter={(day) => `${t('employeeDetail.tableDate')} ${day}`}
+                      formatter={(value) => [value, t('Present')]}
+                      labelFormatter={(day) => `${t('Date')} ${day}`}
                       contentStyle={{ borderRadius: 8, borderColor: '#e5e5e5', fontSize: 12 }}
                     />
                     <Area type="monotone" dataKey="present_count" stroke={BLUE} strokeWidth={2} fill={BLUE} fillOpacity={0.1} />
@@ -179,10 +182,10 @@ export function AdminStatsPageContent() {
               )}
             </ChartCard>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <ChartCard title={t('stats.topLateTitle')}>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <ChartCard title={t('Most late employees')}>
                 {topLate.length === 0 ? (
-                  <EmptyChartState label={t('stats.noData')} />
+                  <EmptyChartState label={t('No data for this month yet')} />
                 ) : (
                   <ResponsiveContainer width="100%" height={Math.max(140, topLate.length * 44)}>
                     <BarChart data={topLate} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
@@ -196,7 +199,7 @@ export function AdminStatsPageContent() {
                         tickLine={false}
                       />
                       <Tooltip
-                        formatter={(value) => [value, t('stats.lateMinutesUnit')]}
+                        formatter={(value) => [value, t('minutes late')]}
                         contentStyle={{ borderRadius: 8, borderColor: '#e5e5e5', fontSize: 12 }}
                       />
                       <Bar dataKey="value" fill={BLUE} radius={4} barSize={18}>
@@ -207,9 +210,9 @@ export function AdminStatsPageContent() {
                 )}
               </ChartCard>
 
-              <ChartCard title={t('stats.topAbsentTitle')}>
+              <ChartCard title={t('Most absent employees')}>
                 {topAbsent.length === 0 ? (
-                  <EmptyChartState label={t('stats.noData')} />
+                  <EmptyChartState label={t('No data for this month yet')} />
                 ) : (
                   <ResponsiveContainer width="100%" height={Math.max(140, topAbsent.length * 44)}>
                     <BarChart data={topAbsent} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
@@ -223,10 +226,41 @@ export function AdminStatsPageContent() {
                         tickLine={false}
                       />
                       <Tooltip
-                        formatter={(value) => [value, t('stats.absentDaysUnit')]}
+                        formatter={(value) => [value, t('days absent')]}
                         contentStyle={{ borderRadius: 8, borderColor: '#e5e5e5', fontSize: 12 }}
                       />
                       <Bar dataKey="value" fill={ORANGE} radius={4} barSize={18}>
+                        <LabelList dataKey="value" position="right" style={{ fontSize: 11, fill: '#52514e' }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </ChartCard>
+
+              <ChartCard title={t('Most early leavers')}>
+                {topEarlyLeave.length === 0 ? (
+                  <EmptyChartState label={t('No data for this month yet')} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={Math.max(140, topEarlyLeave.length * 44)}>
+                    <BarChart
+                      data={topEarlyLeave}
+                      layout="vertical"
+                      margin={{ top: 0, right: 24, left: 0, bottom: 0 }}
+                    >
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        width={110}
+                        tick={{ fontSize: 12, fill: '#52514e' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        formatter={(value) => [value, t('minutes early')]}
+                        contentStyle={{ borderRadius: 8, borderColor: '#e5e5e5', fontSize: 12 }}
+                      />
+                      <Bar dataKey="value" fill={AQUA} radius={4} barSize={18}>
                         <LabelList dataKey="value" position="right" style={{ fontSize: 11, fill: '#52514e' }} />
                       </Bar>
                     </BarChart>

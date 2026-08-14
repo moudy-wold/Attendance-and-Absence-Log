@@ -78,7 +78,7 @@ export function AdminEmployeesScreenContent() {
   }, [hasNext, isLoadingMore, page, search, regularFilter, activeFilter, t])
 
   return (
-    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950`}>
+    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950 pt-3`}>
       <View style={tw`flex-row items-center gap-3 px-5 pb-4`}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={tw`text-sm text-neutral-500`}>{t('Back')}</Text>

@@ -10,6 +10,7 @@ import { Switch } from '../../Global/Switch'
 import { TextField } from '../../Global/TextField'
 import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
+import { ConfirmDialog } from '../../Global/ConfirmDialog'
 
 interface InfoForm {
   firstName: string
@@ -33,6 +34,7 @@ export function EntryAccountDetailPageContent() {
   const [account, setAccount] = useState<User | null>(null)
   const [infoForm, setInfoForm] = useState<InfoForm | null>(null)
   const [isSavingInfo, setIsSavingInfo] = useState(false)
+  const [isResetDeviceConfirmOpen, setIsResetDeviceConfirmOpen] = useState(false)
 
   const [passwordForm, setPasswordForm] = useState<PasswordForm>(initialPasswordForm)
   const [passwordErrors, setPasswordErrors] = useState<Partial<Record<keyof PasswordForm, string>>>({})
@@ -50,7 +52,7 @@ export function EntryAccountDetailPageContent() {
           email: mapped.email ?? '',
         })
       })
-      .catch((error) => toast.error(extractApiError(error, t('common.unexpectedError'))))
+      .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
   }, [accountId, t])
 
   useEffect(() => {
@@ -62,16 +64,16 @@ export function EntryAccountDetailPageContent() {
     try {
       const { data } = await updateUser(account.id, payload)
       setAccount(mapUser(data))
-      toast.success(t('employeeDetail.updateSuccess'))
+      toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     }
   }
 
   async function handleResetDevice() {
-    if (!window.confirm(t('employeeDetail.resetDeviceConfirm'))) return
+    setIsResetDeviceConfirmOpen(false)
     await handleUpdate({ device_id: null })
-    toast.success(t('employeeDetail.resetDeviceSuccess'))
+    toast.success(t('Device unbound'))
   }
 
   async function handleSaveInfo(e: FormEvent) {
@@ -87,9 +89,9 @@ export function EntryAccountDetailPageContent() {
         email: infoForm.email.trim() || undefined,
       })
       setAccount(mapUser(data))
-      toast.success(t('employeeDetail.updateSuccess'))
+      toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setIsSavingInfo(false)
     }
@@ -97,8 +99,8 @@ export function EntryAccountDetailPageContent() {
 
   function validatePassword(): Partial<Record<keyof PasswordForm, string>> {
     const next: Partial<Record<keyof PasswordForm, string>> = {}
-    if (passwordForm.newPassword.length < 8) next.newPassword = t('changePassword.tooShort')
-    else if (/^\d+$/.test(passwordForm.newPassword)) next.newPassword = t('changePassword.numericOnly')
+    if (passwordForm.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
+    else if (/^\d+$/.test(passwordForm.newPassword)) next.newPassword = t('Password cannot be numbers only')
     return next
   }
 
@@ -112,10 +114,10 @@ export function EntryAccountDetailPageContent() {
     setIsSavingPassword(true)
     try {
       await updateUser(accountId, { password: passwordForm.newPassword })
-      toast.success(t('entryAccountDetail.passwordUpdated'))
+      toast.success(t('Password updated'))
       setPasswordForm(initialPasswordForm)
     } catch (error) {
-      toast.error(extractApiError(error, t('common.unexpectedError')))
+      toast.error(extractApiError(error, t('Something went wrong, please try again')))
     } finally {
       setIsSavingPassword(false)
     }
@@ -135,26 +137,26 @@ export function EntryAccountDetailPageContent() {
             <p className="text-sm text-neutral-500">{account.username}</p>
 
             <Switch
-              label={t('employeeDetail.activeToggleLabel')}
-              description={t('employeeDetail.activeToggleDescription')}
+              label={t('Account active')}
+              description={t('When off, this person cannot log in or use the app at all')}
               checked={account.isActive}
               onChange={(checked) => handleUpdate({ is_active: checked })}
             />
 
             <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 px-3.5 py-3">
               <span className="flex flex-col">
-                <span className="text-sm font-medium text-neutral-800">{t('employeeDetail.deviceSection')}</span>
+                <span className="text-sm font-medium text-neutral-800">{t('Bound device')}</span>
                 <span className="text-xs text-neutral-500">
-                  {account.deviceId ? t('employeeDetail.deviceBound') : t('employeeDetail.deviceNotBound')}
+                  {account.deviceId ? t('Bound to a device') : t('Not bound to any device yet')}
                 </span>
               </span>
               {account.deviceId && (
                 <button
                   type="button"
-                  onClick={handleResetDevice}
+                  onClick={() => setIsResetDeviceConfirmOpen(true)}
                   className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
                 >
-                  {t('employeeDetail.resetDevice')}
+                  {t('Allow login from a new device')}
                 </button>
               )}
             </div>
@@ -164,37 +166,37 @@ export function EntryAccountDetailPageContent() {
             onSubmit={handleSaveInfo}
             className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5"
           >
-            <h2 className="text-sm font-semibold text-neutral-800">{t('entryAccountDetail.infoSectionTitle')}</h2>
+            <h2 className="text-sm font-semibold text-neutral-800">{t('Account info')}</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <TextField
-                label={t('employees.form.firstName')}
+                label={t('First name')}
                 value={infoForm.firstName}
                 onChange={(e) => setInfoForm({ ...infoForm, firstName: e.target.value })}
               />
               <TextField
-                label={t('employees.form.lastName')}
+                label={t('Last name')}
                 value={infoForm.lastName}
                 onChange={(e) => setInfoForm({ ...infoForm, lastName: e.target.value })}
               />
             </div>
 
             <TextField
-              label={t('employees.form.phone')}
+              label={t('Phone number')}
               value={infoForm.phone}
               onChange={(e) => setInfoForm({ ...infoForm, phone: e.target.value })}
               type="tel"
             />
 
             <TextField
-              label={t('entryAccountDetail.email')}
+              label={t('Email (optional)')}
               value={infoForm.email}
               onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
               type="email"
             />
 
             <Button type="submit" loading={isSavingInfo} className="mt-1 w-fit px-5">
-              {t('common.save')}
+              {t('Save')}
             </Button>
           </form>
 
@@ -202,10 +204,10 @@ export function EntryAccountDetailPageContent() {
             onSubmit={handleSavePassword}
             className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5"
           >
-            <h2 className="text-sm font-semibold text-neutral-800">{t('entryAccountDetail.passwordSectionTitle')}</h2>
+            <h2 className="text-sm font-semibold text-neutral-800">{t('Change password')}</h2>
 
             <PasswordField
-              label={t('entryAccountDetail.newPassword')}
+              label={t('New password')}
               value={passwordForm.newPassword}
               onChange={(e) => {
                 setPasswordForm({ ...passwordForm, newPassword: e.target.value })
@@ -216,11 +218,22 @@ export function EntryAccountDetailPageContent() {
             />
 
             <Button type="submit" loading={isSavingPassword} className="mt-1 w-fit px-5">
-              {t('entryAccountDetail.changePasswordSubmit')}
+              {t('Update password')}
             </Button>
           </form>
         </div>
       )}
+
+      <ConfirmDialog
+        open={isResetDeviceConfirmOpen}
+        description={t(
+          'Unbind this account from its current device? They will be able to log in from a new device next time.',
+        )}
+        confirmText={t('Unbind')}
+        variant="danger"
+        onConfirm={handleResetDevice}
+        onCancel={() => setIsResetDeviceConfirmOpen(false)}
+      />
     </div>
   )
 }

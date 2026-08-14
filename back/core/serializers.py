@@ -96,14 +96,21 @@ class AdminStatsOverviewSerializer(serializers.Serializer):
     total_present_days = serializers.IntegerField()
     total_absent_days = serializers.IntegerField()
     total_late_minutes = serializers.IntegerField()
+    total_early_leave_minutes = serializers.IntegerField()
     daily_trend = DailyAttendanceCountSerializer(many=True)
     top_late = TopEmployeeStatSerializer(many=True)
     top_absent = TopEmployeeStatSerializer(many=True)
+    top_early_leave = TopEmployeeStatSerializer(many=True)
 
 
 class DailyLateMinutesSerializer(serializers.Serializer):
     date = serializers.DateField()
     late_minutes = serializers.IntegerField()
+
+
+class DailyEarlyLeaveMinutesSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    early_leave_minutes = serializers.IntegerField()
 
 
 class EmployeeStatsSerializer(serializers.Serializer):
@@ -113,5 +120,7 @@ class EmployeeStatsSerializer(serializers.Serializer):
     present_days = serializers.IntegerField()
     absent_days = serializers.IntegerField()
     late_minutes = serializers.IntegerField()
+    early_leave_minutes = serializers.IntegerField()
     on_time_rate = serializers.FloatField()
     daily_late_minutes = DailyLateMinutesSerializer(many=True)
+    daily_early_leave_minutes = DailyEarlyLeaveMinutesSerializer(many=True)

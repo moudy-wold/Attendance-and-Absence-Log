@@ -3,6 +3,7 @@ import { LoginPageContent } from './components/Pages/Login/LoginPageContent'
 import { EmployeesPageContent } from './components/Pages/Employees/EmployeesPageContent'
 import { CreateEmployeePageContent } from './components/Pages/Employees/CreateEmployeePageContent'
 import { EmployeeDetailPageContent } from './components/Pages/Employees/EmployeeDetailPageContent'
+import { EmployeeStatsPageContent } from './components/Pages/Employees/EmployeeStatsPageContent'
 import { KioskPageContent } from './components/Pages/Kiosk/KioskPageContent'
 import { EntryAccountsPageContent } from './components/Pages/EntryAccounts/EntryAccountsPageContent'
 import { EntryAccountDetailPageContent } from './components/Pages/EntryAccounts/EntryAccountDetailPageContent'
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: 'employees', element: <EmployeesPageContent /> },
       { path: 'employees/new', element: <CreateEmployeePageContent /> },
       { path: 'employees/:id', element: <EmployeeDetailPageContent /> },
+      { path: 'employees/:id/stats', element: <EmployeeStatsPageContent /> },
       { path: 'entry-accounts', element: <EntryAccountsPageContent /> },
       { path: 'entry-accounts/:id', element: <EntryAccountDetailPageContent /> },
       { path: 'settings', element: <SettingsPageContent /> },

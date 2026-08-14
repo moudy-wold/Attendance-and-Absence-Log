@@ -29,4 +29,8 @@ export interface EmployeeAttendance extends User {
 
 export interface RawEmployeeAttendance extends RawUser {
   attendance: RawAttendance[]
+  present_days: number
+  absent_days: number
+  late_minutes: number
+  early_leave_minutes: number
 }

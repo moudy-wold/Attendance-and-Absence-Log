@@ -404,8 +404,10 @@ class AdminStatsOverviewView(APIView):
         total_present_days = 0
         total_absent_days = 0
         total_late_minutes = 0
+        total_early_leave_minutes = 0
         top_late = []
         top_absent = []
+        top_early_leave = []
 
         for employee in employees:
             stats = _employee_month_stats(
@@ -419,12 +421,15 @@ class AdminStatsOverviewView(APIView):
             total_present_days += stats["present_days"]
             total_absent_days += stats["absent_days"]
             total_late_minutes += stats["late_minutes"]
+            total_early_leave_minutes += stats["early_leave_minutes"]
             name = f"{employee.first_name} {employee.last_name}".strip() or employee.username
             top_late.append({"id": employee.id, "name": name, "value": stats["late_minutes"]})
             top_absent.append({"id": employee.id, "name": name, "value": stats["absent_days"]})
+            top_early_leave.append({"id": employee.id, "name": name, "value": stats["early_leave_minutes"]})
 
         top_late.sort(key=lambda item: item["value"], reverse=True)
         top_absent.sort(key=lambda item: item["value"], reverse=True)
+        top_early_leave.sort(key=lambda item: item["value"], reverse=True)
 
         daily_trend = list(
             Attendance.objects.filter(user__is_employee=True, date__year=year, date__month=month)
@@ -452,9 +457,11 @@ class AdminStatsOverviewView(APIView):
             "total_present_days": total_present_days,
             "total_absent_days": total_absent_days,
             "total_late_minutes": total_late_minutes,
+            "total_early_leave_minutes": total_early_leave_minutes,
             "daily_trend": daily_trend,
             "top_late": top_late[:5],
             "top_absent": top_absent[:5],
+            "top_early_leave": top_early_leave[:5],
         }
         return Response(AdminStatsOverviewSerializer(data).data)
 
@@ -479,7 +486,11 @@ class EmployeeStatsView(APIView):
             working_days=working_days,
         )
         present_days = stats["present_days"]
-        on_time_days = sum(1 for minutes in stats["daily_late_minutes"].values() if minutes == 0)
+        on_time_days = sum(
+            1
+            for day, late_minutes in stats["daily_late_minutes"].items()
+            if late_minutes == 0 and stats["daily_early_leave_minutes"].get(day, 0) == 0
+        )
         on_time_rate = round((on_time_days / present_days) * 100, 1) if present_days else 0.0
 
         data = {
@@ -489,10 +500,15 @@ class EmployeeStatsView(APIView):
             "present_days": present_days,
             "absent_days": stats["absent_days"],
             "late_minutes": stats["late_minutes"],
+            "early_leave_minutes": stats["early_leave_minutes"],
             "on_time_rate": on_time_rate,
             "daily_late_minutes": [
                 {"date": day, "late_minutes": minutes}
                 for day, minutes in sorted(stats["daily_late_minutes"].items())
+            ],
+            "daily_early_leave_minutes": [
+                {"date": day, "early_leave_minutes": minutes}
+                for day, minutes in sorted(stats["daily_early_leave_minutes"].items())
             ],
         }
         return Response(EmployeeStatsSerializer(data).data)

@@ -40,8 +40,8 @@ export function LoginPageContent() {
 
   function validate(): Partial<Record<keyof LoginForm, string>> {
     const next: Partial<Record<keyof LoginForm, string>> = {}
-    if (!form.username.trim()) next.username = t('auth.usernameRequired')
-    if (!form.password) next.password = t('auth.passwordRequired')
+    if (!form.username.trim()) next.username = t('Please enter your username or phone number')
+    if (!form.password) next.password = t('Please enter your password')
     return next
   }
 
@@ -69,8 +69,8 @@ export function LoginPageContent() {
     } catch (error) {
       const message =
         isAxiosError(error) && error.response?.status === 401
-          ? t('auth.invalidCredentials')
-          : extractApiError(error, t('common.unexpectedError'))
+          ? t('Invalid username or password')
+          : extractApiError(error, t('Something went wrong, please try again'))
       setTopError(message)
       toast.error(message)
     } finally {
@@ -84,7 +84,7 @@ export function LoginPageContent() {
     logout()
     setMustChangePassword(false)
     setForm(initialForm)
-    toast.success(t('changePassword.pleaseSignInAgain'))
+    toast.success(t('Password changed — please sign in again with your new password.'))
   }
 
   return (
@@ -96,7 +96,7 @@ export function LoginPageContent() {
           onSubmit={handleSubmit}
           className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
         >
-          <h1 className="text-lg font-semibold text-neutral-900">{t('auth.loginTitle')}</h1>
+          <h1 className="text-lg font-semibold text-neutral-900">{t('Login')}</h1>
 
           {topError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600">
@@ -105,7 +105,7 @@ export function LoginPageContent() {
           )}
 
           <TextField
-            label={t('auth.username')}
+            label={t('Username or phone number')}
             value={form.username}
             onChange={handleChange('username')}
             error={errors.username}
@@ -113,7 +113,7 @@ export function LoginPageContent() {
           />
 
           <PasswordField
-            label={t('auth.password')}
+            label={t('Password')}
             value={form.password}
             onChange={handleChange('password')}
             error={errors.password}
@@ -121,7 +121,7 @@ export function LoginPageContent() {
           />
 
           <Button type="submit" loading={isSubmitting}>
-            {t('auth.submit')}
+            {t('Sign in')}
           </Button>
           <div className="max-w-sm mx-auto ">
             <LanguageSwitcher />

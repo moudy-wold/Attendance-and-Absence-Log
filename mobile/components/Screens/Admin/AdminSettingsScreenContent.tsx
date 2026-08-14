@@ -31,7 +31,7 @@ export function AdminSettingsScreenContent() {
   }, [t])
 
   return (
-    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950`}>
+    <View style={tw`flex-1 bg-neutral-50 dark:bg-neutral-950 pt-3`}>
       <View style={tw`flex-row items-center gap-3 px-5 pb-4`}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={tw`text-sm text-neutral-500`}>{t('Back')}</Text>
@@ -49,6 +49,7 @@ export function AdminSettingsScreenContent() {
             value={settings.min_session_duration_seconds}
           />
           <SettingRow label={t('Work start time')} value={settings.work_start_time.slice(0, 5)} />
+          <SettingRow label={t('Work end time')} value={settings.work_end_time.slice(0, 5)} />
         </View>
       )}
     </View>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, Pressable, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { router } from 'expo-router'
 import Toast from 'react-native-toast-message'
@@ -15,6 +15,7 @@ import { tw } from '../../../lib/tw'
 
 const BLUE = '#2a78d6'
 const ORANGE = '#eb6834'
+const AQUA = '#1baf7a'
 
 function monthLabel(year: number, month: number, locale: string) {
   return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(new Date(year, month - 1, 1))
@@ -70,9 +71,11 @@ export function AdminHomeScreenContent() {
         <Button variant="secondary" style={tw`flex-1`} onPress={() => router.push('/admin-employees')}>
           {t('Employees')}
         </Button>
-        <Button variant="secondary" style={tw`flex-1`} onPress={() => router.push('/admin-entry-accounts')}>
-          {t('Kiosk accounts')}
-        </Button>
+        <TouchableOpacity style={[tw`flex-1 border border-gray-200 bg-white rounded-lg items-center justify-center text-center`, { textAlign: "center" }]} onPress={() => router.push('/admin-entry-accounts')}>
+          <Text style={tw`text-sm text-center font-medium text-neutral-800 dark:text-neutral-100`}>
+            {t('Kiosk accounts')}
+          </Text>
+        </TouchableOpacity>
         <Button variant="secondary" style={tw`flex-1`} onPress={() => router.push('/admin-settings')}>
           {t('Settings')}
         </Button>
@@ -99,6 +102,7 @@ export function AdminHomeScreenContent() {
             <StatCard label={t('Total employees')} value={stats.total_employees} />
             <StatCard label={t('Total late minutes')} value={stats.total_late_minutes} />
             <StatCard label={t('Total absent days')} value={stats.total_absent_days} />
+            <StatCard label={t('Total early leave minutes')} value={stats.total_early_leave_minutes} />
             <StatCard label={t('Regular')} value={stats.regular_count} />
             <StatCard label={t('Irregular')} value={stats.irregular_count} />
             <StatCard label={t('Active')} value={stats.active_count} />
@@ -137,6 +141,17 @@ export function AdminHomeScreenContent() {
               items={stats.top_absent.filter((item) => item.value > 0)}
               emptyLabel={t('No data')}
               color={ORANGE}
+            />
+          </View>
+
+          <View style={tw`gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900`}>
+            <Text style={tw`text-sm font-semibold text-neutral-800 dark:text-neutral-100`}>
+              {t('Most early leavers')}
+            </Text>
+            <RankedBarList
+              items={stats.top_early_leave.filter((item) => item.value > 0)}
+              emptyLabel={t('No data')}
+              color={AQUA}
             />
           </View>
         </>

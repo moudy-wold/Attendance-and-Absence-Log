@@ -35,6 +35,7 @@ export interface SystemSettings {
   qr_token_lifetime_seconds: number
   min_session_duration_seconds: number
   work_start_time: string
+  work_end_time: string
 }
 
 export async function getSystemSettings() {

@@ -213,6 +213,7 @@ class UpdateUserViewTests(APITestCase):
 
     def test_reset_device_id(self):
         self.employee.device_id = "old"
+        self.employee.is_first_login = False
         self.employee.save()
         response = self.client.patch(
             f"/api/auth/users/{self.employee.pk}/", {"device_id": None}, format="json"
@@ -220,6 +221,18 @@ class UpdateUserViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.employee.refresh_from_db()
         self.assertIsNone(self.employee.device_id)
+        self.assertFalse(self.employee.is_first_login)
+
+    def test_admin_password_reset_forces_first_login(self):
+        self.employee.is_first_login = False
+        self.employee.save()
+        response = self.client.patch(
+            f"/api/auth/users/{self.employee.pk}/", {"password": "NewDefault@123"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.employee.refresh_from_db()
+        self.assertTrue(self.employee.is_first_login)
+        self.assertTrue(self.employee.check_password("NewDefault@123"))
 
 
 class ChangePasswordViewTests(APITestCase):
