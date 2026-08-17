@@ -47,6 +47,36 @@ function SettingsIcon() {
   )
 }
 
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="size-4.5 rtl:-scale-x-100" aria-hidden="true">
+      <path
+        d="M7.5 17.5h-3a1.5 1.5 0 0 1-1.5-1.5v-12A1.5 1.5 0 0 1 4.5 2.5h3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M13 14.25 17.25 10 13 5.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 10H7.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function CollapseIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+      <path
+        d="M12.5 15 7.5 10l5-5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const navItems = [
   { to: '/', end: true, labelKey: 'Statistics', Icon: StatsIcon },
   { to: '/employees', end: false, labelKey: 'Employees', Icon: EmployeesIcon },
@@ -54,24 +84,34 @@ const navItems = [
   { to: '/settings', end: false, labelKey: 'Settings', Icon: SettingsIcon },
 ] as const
 
+const COLLAPSED_STORAGE_KEY = 'sidebar:collapsed'
+
 export function Sidebar() {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1')
 
   function handleLogout() {
     logout()
     navigate('/login', { replace: true })
   }
 
+  function toggleCollapsed() {
+    setIsCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem(COLLAPSED_STORAGE_KEY, next ? '1' : '0')
+      return next
+    })
+  }
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-      isActive ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
-    }`
+    `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isCollapsed ? 'md:justify-center md:gap-0 md:px-0' : ''
+    } ${isActive ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}`
 
   return (
-    <>
+    <div className=''>
       <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 md:hidden">
         <button
           type="button"
@@ -96,36 +136,71 @@ export function Sidebar() {
       )}
 
       <aside
-        className={`fixed inset-y-0 start-0 z-40 flex w-64 shrink-0 flex-col border-e border-neutral-200 bg-white transition-transform duration-200 md:static ${
-          isOpen ? '' : 'max-md:-translate-x-full max-md:rtl:translate-x-full'
-        }`}
+        className={`fixed inset-y-0 start-0 z-40 flex h-screen w-64 shrink-0 flex-col border-e border-neutral-200 bg-white transition-[width,transform] duration-300 ease-in-out md:static ${isOpen ? '' : 'max-md:-translate-x-full max-md:rtl:translate-x-full'
+          } ${isCollapsed ? 'md:w-20' : 'md:w-64'}`}
       >
-        <div className="hidden items-center px-5 py-5 md:flex">
-          <span className="text-base font-semibold text-neutral-900">{t('Admin panel')}</span>
+        <div className={`hidden items-center md:flex ${isCollapsed ? 'justify-center px-2 py-5' : 'justify-between px-5 py-5'}`}>
+          {!isCollapsed && (
+            <span className="truncate text-base font-semibold text-neutral-900">{t('Admin panel')}</span>
+          )}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={isCollapsed ? t('Expand sidebar') : t('Collapse sidebar')}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+          >
+            <span
+              className={`block transition-transform duration-300 rtl:-scale-x-100 ${isCollapsed ? 'rotate-180' : ''}`}
+            >
+              <CollapseIcon />
+            </span>
+          </button>
         </div>
         <div className="h-14 md:hidden" />
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
           {navItems.map(({ to, end, labelKey, Icon }) => (
-            <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={() => setIsOpen(false)}>
-              <Icon />
-              {t(labelKey)}
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={navLinkClass}
+              onClick={() => setIsOpen(false)}
+              title={isCollapsed ? t(labelKey) : undefined}
+            >
+              <span className="shrink-0">
+                <Icon />
+              </span>
+              <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>{t(labelKey)}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="flex flex-col gap-3 border-t border-neutral-200 p-4">
-          <span className="truncate text-sm font-medium text-neutral-700">{user?.fullName}</span>
-          <LanguageSwitcher />
+        <div
+          className={`flex flex-col gap-3 border-t border-neutral-200 p-4 ${isCollapsed ? 'md:items-center' : ''}`}
+        >
+          <span className={`truncate text-sm font-medium text-neutral-700 ${isCollapsed ? 'md:hidden' : ''}`}>
+            {user?.fullName}
+          </span>
+          <div className={isCollapsed ? 'md:hidden' : ''}>
+            <LanguageSwitcher />
+          </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
+            title={isCollapsed ? t('Sign out') : undefined}
+            className={`rounded-lg border border-neutral-200 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50 ${isCollapsed ? 'md:flex md:size-9 md:items-center md:justify-center md:px-0 md:py-0' : 'px-3 py-1.5'
+              }`}
           >
-            {t('Sign out')}
+            {isCollapsed ? (
+              <span className="hidden md:block">
+                <LogoutIcon />
+              </span>
+            ) : null}
+            <span className={isCollapsed ? 'md:hidden' : ''}>{t('Sign out')}</span>
           </button>
         </div>
       </aside>
-    </>
+    </div>
   )
 }

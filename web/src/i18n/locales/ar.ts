@@ -4,7 +4,6 @@ export default {
   "Something went wrong, please try again": "حدث خطأ ما، حاول مرة أخرى",
   Back: "رجوع",
   Save: "حفظ",
-
   Login: "تسجيل الدخول",
   "Username or phone number": "اسم المستخدم أو رقم الهاتف",
   Password: "كلمة المرور",
@@ -14,14 +13,12 @@ export default {
     "الرجاء إدخال اسم المستخدم أو رقم الهاتف",
   "Please enter your password": "الرجاء إدخال كلمة المرور",
   "Sign out": "تسجيل الخروج",
-
   "Admin panel": "لوحة الإدارة",
   "Toggle menu": "فتح/إغلاق القائمة",
   Statistics: "الإحصائيات",
   Employees: "الموظفون",
   "Kiosk accounts": "حسابات شاشات الدخول",
   Settings: "الإعدادات",
-
   Search: "بحث",
   "Name, username or phone": "الاسم أو اسم المستخدم أو الهاتف",
   "+ New account": "+ حساب جديد",
@@ -44,7 +41,6 @@ export default {
   Previous: "السابق",
   Next: "التالي",
   Edit: "تعديل",
-
   "New account": "حساب جديد",
   "Account type": "نوع الحساب",
   "Password (optional)": "كلمة المرور (اختياري)",
@@ -62,7 +58,6 @@ export default {
   "Registered with the labor syndicate": "مسجّل بنقابة العمال",
   "Create account": "إنشاء الحساب",
   "Account created": "تم إنشاء الحساب",
-
   "Account active": "الحساب نشط",
   "When off, this person cannot log in or use the app at all":
     "عند الإيقاف، لن يستطيع هذا الشخص تسجيل الدخول أو استخدام التطبيق إطلاقًا",
@@ -84,23 +79,19 @@ export default {
   "Check in": "الدخول",
   "Check out": "الخروج",
   "No attendance records for this month": "لا يوجد سجلات حضور لهذا الشهر",
-
   "Attendance kiosk": "شاشة تسجيل الحضور",
   "Generating…": "جاري التوليد…",
   "Refreshes in": "يتجدد خلال",
   "Could not generate a code, retrying…": "تعذّر توليد رمز، إعادة المحاولة…",
-
   "+ New kiosk account": "+ حساب شاشة دخول جديد",
   Device: "الجهاز",
   "No kiosk accounts yet": "لا يوجد حسابات شاشات دخول بعد",
-
   "Account info": "معلومات الحساب",
   "Email (optional)": "البريد الإلكتروني (اختياري)",
   "Change password": "تغيير كلمة المرور",
   "New password": "كلمة المرور الجديدة",
   "Update password": "تحديث كلمة المرور",
   "Password updated": "تم تحديث كلمة المرور",
-
   "Set a new password": "حدّد كلمة مرور جديدة",
   "This is your first time signing in — choose a new password to continue.":
     "هذه أول مرة تسجّل فيها الدخول — اختر كلمة مرور جديدة للمتابعة.",
@@ -112,7 +103,6 @@ export default {
   "Password changed": "تم تغيير كلمة المرور",
   "Password changed — please sign in again with your new password.":
     "تم تغيير كلمة المرور — الرجاء تسجيل الدخول مرة أخرى بكلمة المرور الجديدة.",
-
   "Attendance rate": "نسبة الحضور",
   "Total employees": "إجمالي الموظفين",
   "Late minutes (total)": "دقائق التأخير (إجمالي)",
@@ -132,7 +122,6 @@ export default {
   "Most early leavers": "الأكثر انصرافًا مبكرًا",
   "minutes early": "دقيقة انصراف مبكر",
   "No data for this month yet": "لا يوجد بيانات لهذا الشهر بعد",
-
   "QR code lifetime (seconds)": "مدة صلاحية رمز QR (بالثواني)",
   "How often the attendance QR code on the kiosk screen refreshes. Between 5 and 300 seconds.":
     "كل كم مدة يتجدد رمز الحضور بشاشة الكشك. بين 5 و300 ثانية.",
