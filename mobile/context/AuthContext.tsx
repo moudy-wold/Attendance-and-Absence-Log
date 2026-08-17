@@ -4,6 +4,7 @@ import { tokenService } from '../api/tokenService'
 import { setUnauthorizedHandler } from '../api/authBridge'
 import { mapUser, type User } from '../types/user'
 import { getDeviceId } from '../lib/deviceId'
+import { saveBiometricSession, getBiometricSession } from '../lib/biometricAuth'
 import { AuthContext, type AuthContextValue } from './authContextValue'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -41,7 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         await tokenService.setUser(mappedUser)
         setUser(mappedUser)
+        saveBiometricSession(data.access, data.refresh, mappedUser).catch(() => {})
         return mappedUser
+      },
+      async loginWithBiometrics() {
+        const session = await getBiometricSession()
+        if (!session) return null
+
+        await tokenService.setTokens(session.access, session.refresh)
+        await tokenService.setUser(session.user)
+        setUser(session.user)
+        return session.user
       },
       logout() {
         tokenService.clear()

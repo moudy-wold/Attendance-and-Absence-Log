@@ -6,6 +6,7 @@ export default {
   "Username or phone number": "Username or phone number",
   Password: "Password",
   "Sign in": "Sign in",
+  "Login with biometrics": "Login with biometrics",
   "Invalid username or password": "Invalid username or password",
   "Please enter your username or phone number":
     "Please enter your username or phone number",
@@ -52,7 +53,6 @@ export default {
   "Please enter your current password": "Please enter your current password",
   "Password must be at least 8 characters":
     "Password must be at least 8 characters",
-  "Password cannot be numbers only": "Password cannot be numbers only",
   "Passwords do not match": "Passwords do not match",
   "Change password": "Change password",
   "Password changed": "Password changed",
@@ -99,4 +99,7 @@ export default {
   Status: "Status",
   "This account is bound to a different device. Contact an administrator to reset it.":
     "This account is bound to a different device. Contact an administrator to reset it.",
+  "Block irregular employees": "Block irregular employees",
+  Yes: "Yes",
+  No: "No",
 };

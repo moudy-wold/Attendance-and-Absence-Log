@@ -34,6 +34,14 @@ class SystemSettings(models.Model):
         default=datetime.time(17, 0),
         help_text="وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر في التقارير",
     )
+    block_irregular_employees = models.BooleanField(
+        default=True,
+        help_text=(
+            "لما تكون مفعّلة، الموظفون غير النظاميين (is_regular=False) ما يقدرون يسجّلون دخول إطلاقًا، "
+            "وأي جلسة مفتوحة عندهم حاليًا تُرفض بأول طلب جاي منهم — بنفس رسالة خطأ اسم المستخدم/كلمة "
+            "المرور الخاطئة، حتى ما يعرفوا إنه تم حظرهم تحديدًا."
+        ),
+    )
 
     class Meta:
         verbose_name = "System Settings"

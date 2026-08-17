@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ActivityIndicator, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 import 'react-native-reanimated';
 import '../i18n';
 
@@ -17,6 +18,7 @@ import { tw } from '../lib/tw';
 function RootNavigator() {
   const { isAuthenticated, isBootstrapping } = useAuth();
   useSyncLayoutDirection();
+  usePreventScreenCapture();
 
   if (isBootstrapping) {
     return (
@@ -33,9 +35,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="history" />
-        <Stack.Screen name="stats" />
         <Stack.Screen name="admin-employees/index" />
         <Stack.Screen name="admin-employees/[id]" />
         <Stack.Screen name="admin-entry-accounts/index" />

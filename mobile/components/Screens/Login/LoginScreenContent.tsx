@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
-import { View, Text } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useTranslation } from 'react-i18next'
 import { router } from 'expo-router'
 import Toast from 'react-native-toast-message'
 import { isAxiosError } from 'axios'
+import { Ionicons } from '@expo/vector-icons'
 import { TextField } from '../../Global/TextField'
 import { PasswordField } from '../../Global/PasswordField'
 import { Button } from '../../Global/Button'
@@ -12,6 +13,7 @@ import { LanguageSwitcher } from '../../Global/LanguageSwitcher'
 import { ForcedChangePasswordModal } from '../../Global/ForcedChangePasswordModal'
 import { useAuth } from '../../../context/authContextValue'
 import { extractApiError } from '../../../lib/apiError'
+import { isBiometricAvailable, authenticateWithBiometrics, getBiometricSession } from '../../../lib/biometricAuth'
 import { tw } from '../../../lib/tw'
 
 interface LoginForm {
@@ -24,13 +26,36 @@ const fieldOrder: (keyof LoginForm)[] = ['username', 'password']
 
 export function LoginScreenContent() {
   const { t } = useTranslation()
-  const { login, logout } = useAuth()
+  const { login, loginWithBiometrics, logout } = useAuth()
   const passwordRef = useRef<any>(null)
   const [form, setForm] = useState<LoginForm>(initialForm)
   const [errors, setErrors] = useState<Partial<Record<keyof LoginForm, string>>>({})
   const [topError, setTopError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [mustChangePassword, setMustChangePassword] = useState(false)
+  const [showBiometricButton, setShowBiometricButton] = useState(false)
+  const [isAuthenticatingBiometrics, setIsAuthenticatingBiometrics] = useState(false)
+
+  // Only decides whether to show the button — never triggers the biometric
+  // prompt itself. The prompt only ever opens from the button's onPress.
+  useEffect(() => {
+    ;(async () => {
+      const [session, available] = await Promise.all([getBiometricSession(), isBiometricAvailable()])
+      setShowBiometricButton(Boolean(session) && available)
+    })()
+  }, [])
+
+  async function handleBiometricLogin() {
+    setIsAuthenticatingBiometrics(true)
+    try {
+      const success = await authenticateWithBiometrics(t('Confirm it’s you'))
+      if (!success) return
+      const loggedInUser = await loginWithBiometrics()
+      if (loggedInUser) router.replace('/')
+    } finally {
+      setIsAuthenticatingBiometrics(false)
+    }
+  }
 
   function handleChange(field: keyof LoginForm) {
     return (value: string) => {
@@ -137,6 +162,25 @@ export function LoginScreenContent() {
         <Button onPress={handleSubmit} loading={isSubmitting}>
           {t('Sign in')}
         </Button>
+
+        {showBiometricButton && (
+          <TouchableOpacity
+            onPress={handleBiometricLogin}
+            disabled={isAuthenticatingBiometrics}
+            style={tw`flex-row items-center justify-center gap-2 py-1`}
+          >
+            {isAuthenticatingBiometrics ? (
+              <ActivityIndicator />
+            ) : (
+              <>
+                <Ionicons name="finger-print-outline" size={20} color={tw.color('neutral-500')} />
+                <Text style={tw`text-sm font-medium text-neutral-600 dark:text-neutral-300`}>
+                  {t('Login with biometrics')}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </KeyboardAwareScrollView>
   )

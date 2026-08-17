@@ -1,7 +1,10 @@
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from core.models import SystemSettings
 
 from .models import User
 
@@ -20,9 +23,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if self.user.is_employee and not self.user.is_regular:
-            raise serializers.ValidationError(
-                {"detail": "This account is not permitted to log in. Contact an administrator."}
+        if (
+            self.user.is_employee
+            and not self.user.is_regular
+            and SystemSettings.get_solo().block_irregular_employees
+        ):
+            # نفس استثناء ورسالة "بيانات خاطئة" العادية بالضبط، عمدًا — حتى ما يعرف
+            # الموظف المحظور إنه محظور تحديدًا، بدل رسالة "هذا الحساب غير مسموح له بالدخول".
+            raise AuthenticationFailed(
+                "No active account found with the given credentials", "no_active_account"
             )
 
         if self.user.is_employee or self.user.is_entry:

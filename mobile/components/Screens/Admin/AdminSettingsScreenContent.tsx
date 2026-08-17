@@ -50,6 +50,10 @@ export function AdminSettingsScreenContent() {
           />
           <SettingRow label={t('Work start time')} value={settings.work_start_time.slice(0, 5)} />
           <SettingRow label={t('Work end time')} value={settings.work_end_time.slice(0, 5)} />
+          <SettingRow
+            label={t('Block irregular employees')}
+            value={settings.block_irregular_employees ? t('Yes') : t('No')}
+          />
         </View>
       )}
     </View>

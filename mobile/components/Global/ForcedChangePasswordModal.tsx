@@ -42,7 +42,6 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
     const next: Partial<Record<keyof Form, string>> = {}
     if (!form.oldPassword) next.oldPassword = t('Please enter your current password')
     if (form.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
-    else if (/^\d+$/.test(form.newPassword)) next.newPassword = t('Password cannot be numbers only')
     if (form.confirmPassword !== form.newPassword) next.confirmPassword = t('Passwords do not match')
     return next
   }

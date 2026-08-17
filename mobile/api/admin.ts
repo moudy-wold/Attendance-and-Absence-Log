@@ -36,6 +36,7 @@ export interface SystemSettings {
   min_session_duration_seconds: number
   work_start_time: string
   work_end_time: string
+  block_irregular_employees: boolean
 }
 
 export async function getSystemSettings() {

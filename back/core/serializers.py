@@ -15,6 +15,7 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
             "min_session_duration_seconds",
             "work_start_time",
             "work_end_time",
+            "block_irregular_employees",
         ]
 
 

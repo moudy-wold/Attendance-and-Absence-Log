@@ -7,6 +7,8 @@ export interface AuthContextValue {
   isAuthenticated: boolean
   isBootstrapping: boolean
   login: (payload: LoginPayload) => Promise<User>
+  /** Restores the session saved after the last successful password login. Returns null if none is stored. */
+  loginWithBiometrics: () => Promise<User | null>
   logout: () => void
   updateUser: (patch: Partial<User>) => void
 }
