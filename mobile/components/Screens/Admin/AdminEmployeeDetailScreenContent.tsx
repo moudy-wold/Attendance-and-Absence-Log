@@ -78,13 +78,16 @@ export function AdminEmployeeDetailScreenContent() {
             <Text style={tw`text-sm text-neutral-500`}>
               {employee.username} · {employee.phone || '—'}
             </Text>
-            <View style={tw`flex-row gap-2`}>
+            <View style={tw`flex-row flex-wrap gap-2`}>
               <Badge tone={employee.isRegular ? 'green' : 'amber'}>
                 {employee.isRegular ? t('Regular') : t('Irregular')}
               </Badge>
               <Badge tone={employee.isActive ? 'green' : 'red'}>
                 {employee.isActive ? t('Active') : t('Suspended')}
               </Badge>
+              {employee.type !== null && (
+                <Badge tone="neutral">{t('Employee type: {{type}}', { type: employee.type })}</Badge>
+              )}
             </View>
             <Text style={tw`text-xs text-neutral-500`}>
               {employee.deviceId ? t('Bound to a device') : t('Not bound to any device yet')}

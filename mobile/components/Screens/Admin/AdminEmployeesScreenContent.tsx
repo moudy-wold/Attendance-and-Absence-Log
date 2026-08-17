@@ -141,6 +141,9 @@ export function AdminEmployeesScreenContent() {
               <View style={tw`items-end gap-1.5`}>
                 <Badge tone={item.isRegular ? 'green' : 'amber'}>{item.isRegular ? t('Regular') : t('Irregular')}</Badge>
                 <Badge tone={item.isActive ? 'green' : 'red'}>{item.isActive ? t('Active') : t('Suspended')}</Badge>
+                {item.type !== null && (
+                  <Badge tone="neutral">{t('Employee type: {{type}}', { type: item.type })}</Badge>
+                )}
               </View>
             </Pressable>
           )}

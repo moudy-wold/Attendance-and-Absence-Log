@@ -150,6 +150,7 @@ export function EmployeesPageContent() {
                 <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Role')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Type')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Employee type')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Status')}</th>
                 <th className="px-4 py-3 text-start font-medium" >{t('Actions')}</th>
               </tr>
@@ -158,7 +159,7 @@ export function EmployeesPageContent() {
               {employees === null &&
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-3.5" colSpan={6}>
+                    <td className="px-4 py-3.5" colSpan={7}>
                       <div className="h-4 w-full animate-pulse rounded bg-neutral-100" />
                     </td>
                   </tr>
@@ -166,7 +167,7 @@ export function EmployeesPageContent() {
 
               {employees !== null && employees.length === 0 && (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={6}>
+                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={7}>
                     {t('No employees yet')}
                   </td>
                 </tr>
@@ -191,6 +192,7 @@ export function EmployeesPageContent() {
                       </Badge>
                     )}
                   </td>
+                  <td className="px-4 py-3.5 text-neutral-500">{employee.type ?? '—'}</td>
                   <td className="px-4 py-3.5">
                     <Badge tone={employee.isActive ? 'green' : 'red'}>
                       {employee.isActive ? t('Active') : t('Suspended')}

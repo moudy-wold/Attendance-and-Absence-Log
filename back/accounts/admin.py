@@ -9,6 +9,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = (
         "username",
         "email",
+        "type",
         "is_admin",
         "is_entry",
         "is_employee",
@@ -21,6 +22,7 @@ class CustomUserAdmin(UserAdmin):
             {
                 "fields": (
                     "phone",
+                    "type",
                     "is_admin",
                     "is_entry",
                     "is_employee",

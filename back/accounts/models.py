@@ -4,6 +4,9 @@ from django.db import models
 
 class User(AbstractUser):
     phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    type = models.PositiveIntegerField(
+        null=True, blank=True, help_text="تصنيف الموظف داخل الشركة"
+    )
 
     is_admin = models.BooleanField(default=False)
     is_entry = models.BooleanField(default=False)

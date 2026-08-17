@@ -223,6 +223,7 @@ USER_FILTERSET_FIELDS = [
     "first_name",
     "last_name",
     "phone",
+    "type",
     "is_admin",
     "is_entry",
     "is_employee",
@@ -301,6 +302,7 @@ EXPORT_SUMMARY_LABELS = {
     "ar": {
         "columns": [
             "اسم الموظف",
+            "نوع الموظف",
             "نوع الدوام",
             "أيام الدوام",
             "أيام الغياب",
@@ -313,6 +315,7 @@ EXPORT_SUMMARY_LABELS = {
     "en": {
         "columns": [
             "Employee name",
+            "Employee type",
             "Duty type",
             "Days present",
             "Days absent",
@@ -325,6 +328,7 @@ EXPORT_SUMMARY_LABELS = {
     "tr": {
         "columns": [
             "Çalışan adı",
+            "Çalışan türü",
             "Çalışma türü",
             "Çalışılan gün",
             "Devamsızlık günü",
@@ -379,6 +383,7 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
             sheet.append(
                 [
                     f"{employee.first_name} {employee.last_name}".strip(),
+                    employee.type if employee.type is not None else "",
                     labels["full_time"] if employee.is_regular else labels["part_time"],
                     stats["present_days"],
                     stats["absent_days"],

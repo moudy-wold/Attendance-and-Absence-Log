@@ -98,6 +98,9 @@ export default {
 
   "Account info": "Hesap bilgileri",
   "Email (optional)": "E-posta (isteğe bağlı)",
+  "Employee type": "Çalışan türü",
+  "Employee type (optional)": "Çalışan türü (isteğe bağlı)",
+  "Employee type must be a number": "Çalışan türü bir sayı olmalıdır",
   "Change password": "Şifreyi değiştir",
   "New password": "Yeni şifre",
   "Update password": "Şifreyi güncelle",

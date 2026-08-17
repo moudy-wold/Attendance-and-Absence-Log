@@ -392,6 +392,7 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
             rows[0],
             (
                 "اسم الموظف",
+                "نوع الموظف",
                 "نوع الدوام",
                 "أيام الدوام",
                 "أيام الغياب",
@@ -403,11 +404,12 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         employee_row = rows[1]
         working_days = _working_days_in_range(2024, 1, 31)
         self.assertEqual(employee_row[0], "Test Employee")
-        self.assertEqual(employee_row[1], "دوام كامل")
-        self.assertEqual(employee_row[2], 2)  # أيام دوام
-        self.assertEqual(employee_row[3], working_days - 2)  # أيام غياب
-        self.assertEqual(employee_row[4], 15)  # دقائق تأخير (يوم الاثنين فقط)
-        self.assertEqual(employee_row[5], 30)  # دقائق انصراف مبكر (يوم الثلاثاء فقط)
+        self.assertIsNone(employee_row[1])  # نوع الموظف (غير محدَّد)
+        self.assertEqual(employee_row[2], "دوام كامل")
+        self.assertEqual(employee_row[3], 2)  # أيام دوام
+        self.assertEqual(employee_row[4], working_days - 2)  # أيام غياب
+        self.assertEqual(employee_row[5], 15)  # دقائق تأخير (يوم الاثنين فقط)
+        self.assertEqual(employee_row[6], 30)  # دقائق انصراف مبكر (يوم الثلاثاء فقط)
 
 
 class SystemSettingsTests(APITestCase):

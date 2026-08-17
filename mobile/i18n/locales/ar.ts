@@ -17,6 +17,7 @@ export default {
   Admin: "أدمن",
   Regular: "رسمي",
   Irregular: "غير رسمي",
+  "Employee type: {{type}}": "نوع الموظف: {{type}}",
   "Camera access is needed to scan the attendance code.":
     "نحتاج صلاحية الكاميرا لمسح رمز الحضور.",
   "Allow camera access": "السماح باستخدام الكاميرا",

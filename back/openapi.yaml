@@ -97,6 +97,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: type
+        schema:
+          type: integer
+      - in: query
         name: username
         schema:
           type: string
@@ -229,6 +233,10 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: type
+        schema:
+          type: integer
       - in: query
         name: username
         schema:
@@ -802,6 +810,8 @@ components:
           type: integer
         total_late_minutes:
           type: integer
+        total_early_leave_minutes:
+          type: integer
         daily_trend:
           type: array
           items:
@@ -811,6 +821,10 @@ components:
           items:
             $ref: '#/components/schemas/TopEmployeeStat'
         top_absent:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopEmployeeStat'
+        top_early_leave:
           type: array
           items:
             $ref: '#/components/schemas/TopEmployeeStat'
@@ -824,8 +838,10 @@ components:
       - regular_count
       - suspended_count
       - top_absent
+      - top_early_leave
       - top_late
       - total_absent_days
+      - total_early_leave_minutes
       - total_employees
       - total_late_minutes
       - total_present_days
@@ -888,6 +904,17 @@ components:
       required:
       - date
       - present_count
+    DailyEarlyLeaveMinutes:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        early_leave_minutes:
+          type: integer
+      required:
+      - date
+      - early_leave_minutes
     DailyLateMinutes:
       type: object
       properties:
@@ -927,7 +954,15 @@ components:
           maxLength: 150
         phone:
           type: string
+          nullable: true
           maxLength: 20
+        type:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: تصنيف الموظف داخل الشركة
         is_admin:
           type: boolean
         is_entry:
@@ -990,6 +1025,8 @@ components:
           type: integer
         late_minutes:
           type: integer
+        early_leave_minutes:
+          type: integer
         on_time_rate:
           type: number
           format: double
@@ -997,9 +1034,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DailyLateMinutes'
+        daily_early_leave_minutes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyEarlyLeaveMinutes'
       required:
       - absent_days
+      - daily_early_leave_minutes
       - daily_late_minutes
+      - early_leave_minutes
       - late_minutes
       - month
       - on_time_rate
@@ -1101,7 +1144,15 @@ components:
           maxLength: 150
         phone:
           type: string
+          nullable: true
           maxLength: 20
+        type:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: تصنيف الموظف داخل الشركة
         is_admin:
           type: boolean
         is_entry:
@@ -1176,7 +1227,15 @@ components:
           type: string
         phone:
           type: string
+          nullable: true
           maxLength: 20
+        type:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: تصنيف الموظف داخل الشركة
         is_admin:
           type: boolean
         is_entry:
@@ -1259,7 +1318,15 @@ components:
           maxLength: 150
         phone:
           type: string
+          nullable: true
           maxLength: 20
+        type:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: تصنيف الموظف داخل الشركة
         is_admin:
           type: boolean
         is_entry:
@@ -1313,7 +1380,15 @@ components:
           maxLength: 150
         phone:
           type: string
+          nullable: true
           maxLength: 20
+        type:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: تصنيف الموظف داخل الشركة
         is_admin:
           type: boolean
         is_entry:
