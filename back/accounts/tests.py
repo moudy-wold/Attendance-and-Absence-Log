@@ -1,7 +1,21 @@
+from django.db import IntegrityError, transaction
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import User
+
+
+class UserPhoneUniquenessTests(APITestCase):
+    def test_duplicate_phone_rejected(self):
+        User.objects.create_user(username="u1", password="x", phone="0912345678")
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                User.objects.create_user(username="u2", password="x", phone="0912345678")
+
+    def test_multiple_users_without_phone_allowed(self):
+        User.objects.create_user(username="u1", password="x")
+        User.objects.create_user(username="u2", password="x")
+        self.assertEqual(User.objects.filter(phone__isnull=True).count(), 2)
 
 
 class RegisterViewTests(APITestCase):
@@ -87,6 +101,16 @@ class RegisterViewTests(APITestCase):
             self.url, {"first_name": "A", "last_name": "B", "password": "StrongPass@123"}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_duplicate_phone_rejected_by_register_api(self):
+        User.objects.create_user(username="existing", password="x", phone="0912345678")
+        response = self.client.post(
+            self.url,
+            {"first_name": "Dup", "last_name": "Phone", "password": "StrongPass@123", "phone": "0912345678"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
 
     def test_new_user_defaults_is_first_login_true(self):
         response = self.client.post(
@@ -188,6 +212,25 @@ class LoginDeviceBindingTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_login_with_phone_number(self):
+        self.employee.phone = "0991655832"
+        self.employee.save()
+        response = self.client.post(
+            self.url,
+            {"username": "0991655832", "password": "Employee@12345", "device_id": "deviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["username"], "employee1")
+
+    def test_login_with_unknown_phone_rejected(self):
+        response = self.client.post(
+            self.url,
+            {"username": "0000000000", "password": "Employee@12345", "device_id": "deviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class UpdateUserViewTests(APITestCase):
