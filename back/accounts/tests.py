@@ -201,7 +201,26 @@ class LoginDeviceBindingTests(APITestCase):
             {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # 401 بنفس رسالة بيانات الدخول الخاطئة العادية — عمدًا لا يُميَّز هذا عن محاولة دخول
+        # بكلمة مرور خاطئة، حتى لا يعرف الموظف المحظور إنه محظور تحديدًا.
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "No active account found with the given credentials")
+
+    def test_irregular_employee_can_login_when_block_disabled(self):
+        from core.models import SystemSettings
+
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.block_irregular_employees = False
+        settings_obj.save()
+
+        self.employee.is_regular = False
+        self.employee.save()
+        response = self.client.post(
+            self.url,
+            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_irregular_entry_can_still_login(self):
         self.entry.is_regular = False
@@ -231,6 +250,34 @@ class LoginDeviceBindingTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class BlockIrregularEmployeesSwitchTests(APITestCase):
+    """السويتش لا يمنع تسجيل الدخول فقط، بل يقطع وصول أي جلسة مفتوحة عندهم فورًا —
+    حتى لو التوكن لسه صالح، يُرفض أول طلب جاي منهم لأي endpoint يخص الموظفين."""
+
+    def setUp(self):
+        self.employee = User.objects.create_user(
+            username="irregular1", password="Employee@12345", is_employee=True, is_regular=False
+        )
+        self.client.force_authenticate(self.employee)
+
+    def test_irregular_employee_request_rejected_when_block_enabled(self):
+        from core.models import SystemSettings
+
+        SystemSettings.get_solo()  # يضمن وجود الصف بقيمته الافتراضية (block=True)
+        response = self.client.get("/api/attendance/my/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_irregular_employee_request_allowed_when_block_disabled(self):
+        from core.models import SystemSettings
+
+        settings_obj = SystemSettings.get_solo()
+        settings_obj.block_irregular_employees = False
+        settings_obj.save()
+
+        response = self.client.get("/api/attendance/my/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class UpdateUserViewTests(APITestCase):

@@ -7,6 +7,7 @@ export default {
   "Username or phone number": "اسم المستخدم أو رقم الهاتف",
   Password: "كلمة المرور",
   "Sign in": "دخول",
+  "Login with biometrics": "تسجيل الدخول من خلال البصمة",
   "Invalid username or password": "اسم المستخدم أو كلمة المرور غير صحيحة",
   "Please enter your username or phone number":
     "الرجاء إدخال اسم المستخدم أو رقم الهاتف",
@@ -53,7 +54,6 @@ export default {
   "Please enter your current password": "الرجاء إدخال كلمة المرور الحالية",
   "Password must be at least 8 characters":
     "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
-  "Password cannot be numbers only": "كلمة المرور لا يمكن أن تكون أرقامًا فقط",
   "Passwords do not match": "كلمتا المرور غير متطابقتين",
   "Change password": "تغيير كلمة المرور",
   "Password changed": "تم تغيير كلمة المرور",
@@ -99,4 +99,7 @@ export default {
   Status: "الحالة",
   "This account is bound to a different device. Contact an administrator to reset it.":
     " هذا الحساب مرتبط بجهاز مختلف. اتصل بمسؤول لإعادة تعيينه.",
+  "Block irregular employees": "حظر الموظفين غير النظاميين",
+  Yes: "نعم",
+  No: "لا",
 } satisfies typeof en;

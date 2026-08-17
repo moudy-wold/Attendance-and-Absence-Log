@@ -106,7 +106,6 @@ export default {
   "Current password": "Current password",
   "Confirm new password": "Confirm new password",
   "Please enter your current password": "Please enter your current password",
-  "Password cannot be numbers only": "Password cannot be numbers only",
   "Passwords do not match": "Passwords do not match",
   "Password changed": "Password changed",
   "Password changed — please sign in again with your new password.":
@@ -147,4 +146,16 @@ export default {
   "Settings saved": "Settings saved",
   "Active/Inactive": "Active/Inactive",
   Actions: "Actions",
+
+  "Block irregular employees": "Block irregular employees",
+  "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
+    "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.",
+  "Irregular employees are now blocked": "Irregular employees are now blocked",
+  "Irregular employees can now log in again": "Irregular employees can now log in again",
+  "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
+    "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?",
+  "Irregular employees will be able to sign in again. Continue?":
+    "Irregular employees will be able to sign in again. Continue?",
+  "Block them": "Block them",
+  "Allow them": "Allow them",
 };

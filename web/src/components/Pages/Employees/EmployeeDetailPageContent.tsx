@@ -104,7 +104,6 @@ export function EmployeeDetailPageContent() {
   function validatePassword(): Partial<Record<keyof PasswordForm, string>> {
     const next: Partial<Record<keyof PasswordForm, string>> = {}
     if (passwordForm.newPassword.length < 8) next.newPassword = t('Password must be at least 8 characters')
-    else if (/^\d+$/.test(passwordForm.newPassword)) next.newPassword = t('Password cannot be numbers only')
     return next
   }
 

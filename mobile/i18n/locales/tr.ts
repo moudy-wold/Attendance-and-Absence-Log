@@ -8,6 +8,7 @@ export default {
   "Username or phone number": "Kullanıcı adı veya telefon numarası",
   Password: "Şifre",
   "Sign in": "Giriş yap",
+  "Login with biometrics": "Biyometrik ile giriş yap",
   "Invalid username or password": "Kullanıcı adı veya şifre hatalı",
   "Please enter your username or phone number":
     "Lütfen kullanıcı adınızı veya telefon numaranızı girin",
@@ -53,7 +54,6 @@ export default {
   "Confirm new password": "Yeni şifreyi onayla",
   "Please enter your current password": "Lütfen mevcut şifrenizi girin",
   "Password must be at least 8 characters": "Şifre en az 8 karakter olmalı",
-  "Password cannot be numbers only": "Şifre yalnızca rakamlardan oluşamaz",
   "Passwords do not match": "Şifreler eşleşmiyor",
   "Change password": "Şifreyi değiştir",
   "Password changed": "Şifre değiştirildi",
@@ -99,4 +99,7 @@ export default {
   Status: "Durum",
   "This account is bound to a different device. Contact an administrator to reset it.":
     "Bu hesap farklı bir cihaza bağlı. Sıfırlamak için bir yönetici ile iletişime geçin.",
+  "Block irregular employees": "Geçici çalışanları engelle",
+  Yes: "Evet",
+  No: "Hayır",
 } satisfies typeof en;

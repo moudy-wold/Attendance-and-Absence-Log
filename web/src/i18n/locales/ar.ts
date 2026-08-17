@@ -105,7 +105,6 @@ export default {
   "Current password": "كلمة المرور الحالية",
   "Confirm new password": "تأكيد كلمة المرور الجديدة",
   "Please enter your current password": "الرجاء إدخال كلمة المرور الحالية",
-  "Password cannot be numbers only": "كلمة المرور لا يمكن أن تكون أرقامًا فقط",
   "Passwords do not match": "كلمتا المرور غير متطابقتين",
   "Password changed": "تم تغيير كلمة المرور",
   "Password changed — please sign in again with your new password.":
@@ -146,4 +145,16 @@ export default {
   "Settings saved": "تم حفظ الإعدادات",
   "Active/Inactive": "نشط/غير نشط",
   Actions: "إجراءات",
+
+  "Block irregular employees": "حظر الموظفين غير النظاميين",
+  "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
+    "عند التفعيل، لن يستطيع الموظفون غير النظاميين تسجيل الدخول — وأي منهم مسجّل دخول حاليًا يُقطع وصوله فورًا. تظهر لهم نفس رسالة خطأ اسم المستخدم أو كلمة المرور الخاطئة.",
+  "Irregular employees are now blocked": "تم حظر الموظفين غير النظاميين",
+  "Irregular employees can now log in again": "صار بإمكان الموظفين غير النظاميين تسجيل الدخول من جديد",
+  "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
+    "سيتم تسجيل خروج جميع الموظفين غير النظاميين فورًا، ولن يستطيعوا تسجيل الدخول مرة أخرى حتى تُلغي هذا الخيار. متابعة؟",
+  "Irregular employees will be able to sign in again. Continue?":
+    "سيصبح بإمكان الموظفين غير النظاميين تسجيل الدخول من جديد. متابعة؟",
+  "Block them": "احظرهم",
+  "Allow them": "اسمح لهم",
 } satisfies typeof en;

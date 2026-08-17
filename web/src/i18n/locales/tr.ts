@@ -116,7 +116,6 @@ export default {
   "Current password": "Mevcut şifre",
   "Confirm new password": "Yeni şifreyi onayla",
   "Please enter your current password": "Lütfen mevcut şifrenizi girin",
-  "Password cannot be numbers only": "Şifre yalnızca rakamlardan oluşamaz",
   "Passwords do not match": "Şifreler eşleşmiyor",
   "Password changed": "Şifre değiştirildi",
   "Password changed — please sign in again with your new password.":
@@ -159,4 +158,16 @@ export default {
   "Settings saved": "Ayarlar kaydedildi",
   "Active/Inactive": "Aktif/Pasif",
   Actions: "İşlemler",
+
+  "Block irregular employees": "Geçici çalışanları engelle",
+  "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
+    "Açıkken geçici çalışanlar giriş yapamaz — ve zaten giriş yapmış olanların erişimi anında kesilir. Onlara yanlış kullanıcı adı veya şifre ile aynı hata gösterilir.",
+  "Irregular employees are now blocked": "Geçici çalışanlar artık engellendi",
+  "Irregular employees can now log in again": "Geçici çalışanlar artık tekrar giriş yapabilir",
+  "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
+    "Tüm geçici çalışanların oturumu anında kapatılacak ve bu seçeneği kapatana kadar tekrar giriş yapamayacaklar. Devam edilsin mi?",
+  "Irregular employees will be able to sign in again. Continue?":
+    "Geçici çalışanlar tekrar giriş yapabilecek. Devam edilsin mi?",
+  "Block them": "Engelle",
+  "Allow them": "İzin ver",
 } satisfies typeof en;
