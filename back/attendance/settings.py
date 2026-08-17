@@ -10,27 +10,49 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def env_bool(key, default):
+    value = os.environ.get(key)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-1-2gm!_6bu8*@%s+_&o(9i0wh0$!ph+0@$t(8qb_4ztv*&py*v"
+# The fallback below is only ever hit in local dev (no .env / SECRET_KEY set) —
+# docker-compose always injects a real SECRET_KEY via the backend .env file.
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-1-2gm!_6bu8*@%s+_&o(9i0wh0$!ph+0@$t(8qb_4ztv*&py*v"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to True so plain `manage.py runserver` keeps working with zero setup;
+# docker-compose sets DEBUG=False explicitly for the production image.
+DEBUG = env_bool("DEBUG", True)
 
 # The dev machine's LAN IP changes whenever it switches networks (needed so the
 # phone can reach the API over Wi-Fi), which kept breaking ALLOWED_HOSTS. Since
 # this only relaxes the check while DEBUG=True, it's safe for local dev and never
 # applies in production.
-ALLOWED_HOSTS = ["*"] if DEBUG else ["192.168.1.2", "127.0.0.1"]
+_allowed_hosts = os.environ.get("ALLOWED_HOSTS")
+if _allowed_hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts.split(",") if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["192.168.1.2", "127.0.0.1"]
 
 
 # Application definition
@@ -86,13 +108,26 @@ QR_TOKEN_LIFETIME_SECONDS = 15
 
 # Dev-only: allow the local Vite dev server (web admin dashboard) to call this API,
 # on whichever port Vite happens to pick (5173 is taken -> it bumps to 5174, etc).
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
-    r"^http://127\.0\.0\.1:\d+$",
-]
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+    ]
+
+# In production the web app is served same-origin behind the nginx container
+# (proxying /api to this service), so CORS is usually unnecessary. This stays
+# available for setups that serve the web app from a separate origin.
+_cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS")
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
+_csrf_trusted_origins = os.environ.get("CSRF_TRUSTED_ORIGINS")
+if _csrf_trusted_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted_origins.split(",") if o.strip()]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "core.middleware.LogErrorResponseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -125,12 +160,14 @@ WSGI_APPLICATION = "attendance.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
+# Falls back to the local sqlite file when DATABASE_URL isn't set (plain local
+# dev); docker-compose points this at the postgres service, e.g.
+# postgres://user:pass@db:5432/attendance
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
@@ -169,6 +206,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 
 # Email

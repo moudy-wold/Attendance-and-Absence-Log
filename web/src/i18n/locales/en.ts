@@ -3,7 +3,6 @@ export default {
     "Something went wrong, please try again",
   Back: "Back",
   Save: "Save",
-
   Login: "Login",
   "Username or phone number": "Username or phone number",
   Password: "Password",
@@ -13,14 +12,12 @@ export default {
     "Please enter your username or phone number",
   "Please enter your password": "Please enter your password",
   "Sign out": "Sign out",
-
   "Admin panel": "Admin panel",
   "Toggle menu": "Toggle menu",
   Statistics: "Statistics",
   Employees: "Employees",
   "Kiosk accounts": "Kiosk accounts",
   Settings: "Settings",
-
   Search: "Search",
   "Name, username or phone": "Name, username or phone",
   "+ New account": "+ New account",
@@ -43,7 +40,6 @@ export default {
   Previous: "Previous",
   Next: "Next",
   Edit: "Edit",
-
   "New account": "New account",
   "Account type": "Account type",
   "Password (optional)": "Password (optional)",
@@ -61,7 +57,6 @@ export default {
   "Registered with the labor syndicate": "Registered with the labor syndicate",
   "Create account": "Create account",
   "Account created": "Account created",
-
   "Account active": "Account active",
   "When off, this person cannot log in or use the app at all":
     "When off, this person cannot log in or use the app at all",
@@ -84,24 +79,20 @@ export default {
   "Check out": "Check out",
   "No attendance records for this month":
     "No attendance records for this month",
-
   "Attendance kiosk": "Attendance kiosk",
   "Generating…": "Generating…",
   "Refreshes in": "Refreshes in",
   "Could not generate a code, retrying…":
     "Could not generate a code, retrying…",
-
   "+ New kiosk account": "+ New kiosk account",
   Device: "Device",
   "No kiosk accounts yet": "No kiosk accounts yet",
-
   "Account info": "Account info",
   "Email (optional)": "Email (optional)",
   "Change password": "Change password",
   "New password": "New password",
   "Update password": "Update password",
   "Password updated": "Password updated",
-
   "Set a new password": "Set a new password",
   "This is your first time signing in — choose a new password to continue.":
     "This is your first time signing in — choose a new password to continue.",
@@ -113,7 +104,6 @@ export default {
   "Password changed": "Password changed",
   "Password changed — please sign in again with your new password.":
     "Password changed — please sign in again with your new password.",
-
   "Attendance rate": "Attendance rate",
   "Total employees": "Total employees",
   "Late minutes (total)": "Late minutes (total)",
@@ -133,7 +123,6 @@ export default {
   "Most early leavers": "Most early leavers",
   "minutes early": "minutes early",
   "No data for this month yet": "No data for this month yet",
-
   "QR code lifetime (seconds)": "QR code lifetime (seconds)",
   "How often the attendance QR code on the kiosk screen refreshes. Between 5 and 300 seconds.":
     "How often the attendance QR code on the kiosk screen refreshes. Between 5 and 300 seconds.",

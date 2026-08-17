@@ -11,13 +11,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.moudy.wold.mobile"
-    },
+    },  
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundImage": "./assets/images/icon.png",
-        "monochromeImage": "./assets/images/icon.png"
+        "foregroundImage": "./assets/images/icon-1.png",
+        "backgroundImage": "./assets/images/icon-1.png",
+        "monochromeImage": "./assets/images/icon-1.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -25,7 +25,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon-1.png"
     },
     "plugins": [
       "expo-router",
