@@ -27,6 +27,10 @@ export default {
   "Name, username or phone": "İsim, kullanıcı adı veya telefon",
   "+ New account": "+ Yeni hesap",
   "Export to Excel": "Excel'e aktar",
+  From: "Başlangıç",
+  To: "Bitiş",
+  "Start date must be before or equal to the end date":
+    "Başlangıç tarihi, bitiş tarihinden önce veya ona eşit olmalıdır",
   Name: "İsim",
   Phone: "Telefon",
   Role: "Rol",

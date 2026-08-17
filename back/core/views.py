@@ -1,4 +1,5 @@
 import calendar
+import re
 import secrets
 from datetime import date, timedelta
 
@@ -14,8 +15,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from openpyxl import Workbook
+from openpyxl.styles import Font
 from rest_framework import filters as drf_filters
 from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,6 +26,7 @@ from .models import Action, Attendance, QRToken, SystemSettings
 from .serializers import (
     AdminStatsOverviewSerializer,
     AttendanceSerializer,
+    DateRangeQuerySerializer,
     EmployeeAttendanceSerializer,
     EmployeeStatsSerializer,
     QRTokenInputSerializer,
@@ -45,6 +49,24 @@ def _resolve_year_month(request) -> tuple[int, int]:
 YEAR_MONTH_PARAMETERS = [
     OpenApiParameter("year", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False),
     OpenApiParameter("month", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False),
+]
+
+
+def _resolve_date_range(request) -> tuple[date, date]:
+    """تُرجع (تاريخ البداية، تاريخ النهاية)، وتفترض افتراضيًا الشهر الحالي (من أول يوم فيه حتى
+    اليوم) عند غياب أحد الطرفين أو كليهما."""
+    query = DateRangeQuerySerializer(data=request.query_params)
+    query.is_valid(raise_exception=True)
+    today = timezone.localdate()
+    start_date = query.validated_data.get("start_date") or today.replace(day=1)
+    end_date = query.validated_data.get("end_date") or today
+    if start_date > end_date:
+        raise ValidationError({"detail": "start_date must be before or equal to end_date."})
+    return start_date, end_date
+
+DATE_RANGE_PARAMETERS = [
+    OpenApiParameter("start_date", OpenApiTypes.DATE, OpenApiParameter.QUERY, required=False),
+    OpenApiParameter("end_date", OpenApiTypes.DATE, OpenApiParameter.QUERY, required=False),
 ]
 
 
@@ -174,22 +196,22 @@ class MyAttendanceView(generics.ListAPIView):
 
 
 class EmployeeExportAttendanceView(APIView):
-    """يصدّر تقرير إكسل شهري لموظف واحد محدَّد بمعرّفه."""
+    """يصدّر تقرير إكسل لموظف واحد محدَّد بمعرّفه، لأي نطاق تاريخي (من - إلى) يختاره الأدمن."""
 
     permission_classes = [IsAdminUser]
 
-    @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: OpenApiTypes.BINARY})
+    @extend_schema(parameters=DATE_RANGE_PARAMETERS, responses={200: OpenApiTypes.BINARY})
     def get(self, request, pk):
         employee = get_object_or_404(User, pk=pk, is_employee=True)
-        year, month = _resolve_year_month(request)
+        start_date, end_date = _resolve_date_range(request)
 
         records = Attendance.objects.filter(
-            user=employee, date__year=year, date__month=month
+            user=employee, date__gte=start_date, date__lte=end_date
         ).order_by("date")
 
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = f"{year}-{month:02d}"
+        sheet.title = f"{start_date.isoformat()}_{end_date.isoformat()}"
         sheet.append(["التاريخ", "وقت الحضور", "وقت الانصراف"])
 
         for record in records:
@@ -209,7 +231,7 @@ class EmployeeExportAttendanceView(APIView):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         response["Content-Disposition"] = (
-            f"attachment; filename=attendance_{employee.username}_{year}_{month:02d}.xlsx"
+            f"attachment; filename=attendance_{employee.username}_{start_date}_{end_date}.xlsx"
         )
         workbook.save(response)
         return response
@@ -251,15 +273,22 @@ def _resolve_working_days(year: int, month: int) -> int:
     return _working_days_in_range(year, month, last_relevant_day)
 
 
-def _employee_month_stats(
-    employee, year: int, month: int, *, work_start_time, work_end_time, working_days: int
-) -> dict:
-    """يحسب أيام الدوام/الغياب ودقائق التأخير والانصراف المبكر لموظف واحد خلال شهر محدَّد.
-    التأخير يُقاس من أول تسجيل حضور باليوم، والانصراف المبكر من آخر تسجيل خروج باليوم."""
-    records = Attendance.objects.filter(
-        user=employee, date__year=year, date__month=month
-    ).order_by("check_in")
+def _count_working_days_between(start_date: date, end_date: date) -> int:
+    """أيام العمل (باستثناء السبت والأحد) ضمن نطاق تاريخي حر، محسوبة حتى اليوم فقط إن امتد
+    النطاق للمستقبل (لا يمكن اعتبار يوم لم يأتِ بعد غيابًا)."""
+    effective_end = min(end_date, timezone.localdate())
+    if effective_end < start_date:
+        return 0
+    return sum(
+        1
+        for offset in range((effective_end - start_date).days + 1)
+        if (start_date + timedelta(days=offset)).isoweekday() not in WEEKEND_ISOWEEKDAYS
+    )
 
+
+def _attendance_stats_for_records(records, *, work_start_time, work_end_time, working_days: int) -> dict:
+    """يحسب أيام الدوام/الغياب ودقائق التأخير والانصراف المبكر من مجموعة تسجيلات حضور جاهزة.
+    التأخير يُقاس من أول تسجيل حضور باليوم، والانصراف المبكر من آخر تسجيل خروج باليوم."""
     first_check_in_by_day = {}
     last_check_out_by_day = {}
     for record in records:
@@ -298,6 +327,28 @@ def _employee_month_stats(
     }
 
 
+def _employee_month_stats(
+    employee, year: int, month: int, *, work_start_time, work_end_time, working_days: int
+) -> dict:
+    records = Attendance.objects.filter(
+        user=employee, date__year=year, date__month=month
+    ).order_by("check_in")
+    return _attendance_stats_for_records(
+        records, work_start_time=work_start_time, work_end_time=work_end_time, working_days=working_days
+    )
+
+
+def _employee_range_stats(
+    employee, start_date: date, end_date: date, *, work_start_time, work_end_time, working_days: int
+) -> dict:
+    records = Attendance.objects.filter(
+        user=employee, date__gte=start_date, date__lte=end_date
+    ).order_by("check_in")
+    return _attendance_stats_for_records(
+        records, work_start_time=work_start_time, work_end_time=work_end_time, working_days=working_days
+    )
+
+
 EXPORT_SUMMARY_LABELS = {
     "ar": {
         "columns": [
@@ -311,6 +362,10 @@ EXPORT_SUMMARY_LABELS = {
         ],
         "full_time": "دوام كامل",
         "part_time": "دوام جزئي",
+        "phone": "الهاتف",
+        "not_set": "غير محدد",
+        "detail_columns": ["التاريخ", "وقت الحضور", "وقت الانصراف"],
+        "back_to_summary": "⬅ العودة للملخص",
     },
     "en": {
         "columns": [
@@ -324,6 +379,10 @@ EXPORT_SUMMARY_LABELS = {
         ],
         "full_time": "Full-time",
         "part_time": "Part-time",
+        "phone": "Phone",
+        "not_set": "Not set",
+        "detail_columns": ["Date", "Check-in", "Check-out"],
+        "back_to_summary": "⬅ Back to summary",
     },
     "tr": {
         "columns": [
@@ -337,14 +396,97 @@ EXPORT_SUMMARY_LABELS = {
         ],
         "full_time": "Tam zamanlı",
         "part_time": "Yarı zamanlı",
+        "phone": "Telefon",
+        "not_set": "Belirtilmemiş",
+        "detail_columns": ["Tarih", "Giriş saati", "Çıkış saati"],
+        "back_to_summary": "⬅ Özete dön",
     },
 }
 
+INVALID_SHEET_NAME_CHARS = re.compile(r"[\\/*?:\[\]']")
+
+
+def _unique_sheet_name(raw_name: str, used_names: set) -> str:
+    """يحوّل اسم الموظف إلى اسم ورقة إكسل صالح (حتى 31 محرفًا، بدون رموز محظورة)، ويضمن تفرّده
+    ضمن نفس الملف حتى لو تشابهت الأسماء بعد الاقتصاص."""
+    cleaned = INVALID_SHEET_NAME_CHARS.sub(" ", raw_name).strip() or "Employee"
+    candidate = cleaned[:31]
+    suffix = 2
+    while candidate.lower() in used_names:
+        suffix_text = f" ({suffix})"
+        candidate = cleaned[: 31 - len(suffix_text)] + suffix_text
+        suffix += 1
+    used_names.add(candidate.lower())
+    return candidate
+
+
+HYPERLINK_FONT = Font(color="0563C1", underline="single")
+
+# ترتيب الحقول ثابت دائمًا في ورقة تفاصيل الموظف — تُستخدم أرقام الصفوف هذه لبناء صيغ الربط
+# (='اسم الورقة'!خلية) في ورقة الملخص، بحيث يظهر أي تعديل على هذه القيم بالورقة الفرعية تلقائيًا
+# في الورقة الرئيسية عند فتح الملف بإكسل.
+DETAIL_ROW_NAME = 2
+DETAIL_ROW_PHONE = 3
+DETAIL_ROW_TYPE = 4
+DETAIL_ROW_DUTY_TYPE = 5
+DETAIL_ROW_PRESENT_DAYS = 6
+DETAIL_ROW_ABSENT_DAYS = 7
+DETAIL_ROW_LATE_MINUTES = 8
+DETAIL_ROW_EARLY_LEAVE_MINUTES = 9
+
+
+def _write_employee_detail_sheet(
+    sheet, employee, full_name, stats, labels, start_date, end_date, summary_sheet_title
+):
+    """يكتب معلومات موظف واحد وتفاصيل حضوره اليومي خلال نطاق تاريخي محدَّد في ورقة إكسل مستقلة
+    ضمن نفس ملف الملخص، مع رابط للعودة لورقة الملخص العامة. أرقام صفوف الحقول المشتركة مع الملخص
+    ثابتة (انظر DETAIL_ROW_*) لأن ورقة الملخص تربط خلاياها بهذه الخلايا عبر صيغ."""
+    back_link = sheet.cell(row=1, column=1, value=labels["back_to_summary"])
+    back_link.hyperlink = f"#'{summary_sheet_title}'!A1"
+    back_link.font = HYPERLINK_FONT
+
+    sheet.cell(row=DETAIL_ROW_NAME, column=1, value=full_name).font = Font(bold=True, size=14)
+    sheet.cell(row=DETAIL_ROW_PHONE, column=1, value=labels["phone"])
+    sheet.cell(row=DETAIL_ROW_PHONE, column=2, value=employee.phone or labels["not_set"])
+    sheet.cell(row=DETAIL_ROW_TYPE, column=1, value=labels["columns"][1])
+    sheet.cell(
+        row=DETAIL_ROW_TYPE, column=2,
+        value=employee.type if employee.type is not None else labels["not_set"],
+    )
+    sheet.cell(row=DETAIL_ROW_DUTY_TYPE, column=1, value=labels["columns"][2])
+    sheet.cell(
+        row=DETAIL_ROW_DUTY_TYPE, column=2,
+        value=labels["full_time"] if employee.is_regular else labels["part_time"],
+    )
+    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=1, value=labels["columns"][3])
+    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=2, value=stats["present_days"])
+    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=1, value=labels["columns"][4])
+    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=2, value=stats["absent_days"])
+    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=1, value=labels["columns"][5])
+    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=2, value=stats["late_minutes"])
+    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=1, value=labels["columns"][6])
+    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=2, value=stats["early_leave_minutes"])
+
+    sheet.append([])
+    sheet.append(labels["detail_columns"])
+
+    records = Attendance.objects.filter(
+        user=employee, date__gte=start_date, date__lte=end_date
+    ).order_by("date")
+    for record in records:
+        sheet.append(
+            [
+                record.date.isoformat(),
+                timezone.localtime(record.check_in).strftime("%H:%M:%S") if record.check_in else "",
+                timezone.localtime(record.check_out).strftime("%H:%M:%S") if record.check_out else "",
+            ]
+        )
+
 
 class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
-    """يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال شهر محدَّد: أيام دوام، أيام غياب، دقائق تأخير.
-    يُطبَّق نفس فلتر/بحث قائمة الموظفين حتى يطابق الملف ما يراه الأدمن على الشاشة، وتُترجَم عناوينه
-    حسب باراميتر lang (ar/en/tr) لتطابق لغة الواجهة وقت التصدير."""
+    """يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال نطاق تاريخي محدَّد (من - إلى): أيام دوام،
+    أيام غياب، دقائق تأخير. يُطبَّق نفس فلتر/بحث قائمة الموظفين حتى يطابق الملف ما يراه الأدمن على
+    الشاشة، وتُترجَم عناوينه حسب باراميتر lang (ar/en/tr) لتطابق لغة الواجهة وقت التصدير."""
 
     permission_classes = [IsAdminUser]
     queryset = User.objects.filter(is_employee=True).order_by("username")
@@ -353,50 +495,65 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
     search_fields = USER_SEARCH_FIELDS
 
     @extend_schema(
-        parameters=YEAR_MONTH_PARAMETERS
+        parameters=DATE_RANGE_PARAMETERS
         + [OpenApiParameter("lang", OpenApiTypes.STR, OpenApiParameter.QUERY, required=False)],
         responses={200: OpenApiTypes.BINARY},
     )
     def get(self, request):
-        year, month = _resolve_year_month(request)
+        start_date, end_date = _resolve_date_range(request)
         settings_obj = SystemSettings.get_solo()
         work_start_time = settings_obj.work_start_time
         work_end_time = settings_obj.work_end_time
         labels = EXPORT_SUMMARY_LABELS.get(request.query_params.get("lang"), EXPORT_SUMMARY_LABELS["ar"])
-        working_days = _resolve_working_days(year, month)
+        working_days = _count_working_days_between(start_date, end_date)
 
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = f"{year}-{month:02d}"
+        sheet.title = f"{start_date.isoformat()}_{end_date.isoformat()}"
         sheet.append(labels["columns"])
+
+        used_sheet_names = {sheet.title.lower()}
 
         employees = self.filter_queryset(self.get_queryset())
         for employee in employees:
-            stats = _employee_month_stats(
+            stats = _employee_range_stats(
                 employee,
-                year,
-                month,
+                start_date,
+                end_date,
                 work_start_time=work_start_time,
                 work_end_time=work_end_time,
                 working_days=working_days,
             )
+            full_name = f"{employee.first_name} {employee.last_name}".strip() or employee.username
+
+            detail_sheet_name = _unique_sheet_name(full_name, used_sheet_names)
+            detail_sheet = workbook.create_sheet(title=detail_sheet_name)
+            _write_employee_detail_sheet(
+                detail_sheet, employee, full_name, stats, labels, start_date, end_date, sheet.title
+            )
+
+            # صيغ (لا قيم ثابتة) تشير لخلايا ورقة الموظف الفرعية، حتى يظهر أي تعديل عليها هناك
+            # تلقائيًا هنا أيضًا عند فتح الملف بإكسل.
             sheet.append(
                 [
-                    f"{employee.first_name} {employee.last_name}".strip(),
-                    employee.type if employee.type is not None else "",
-                    labels["full_time"] if employee.is_regular else labels["part_time"],
-                    stats["present_days"],
-                    stats["absent_days"],
-                    stats["late_minutes"],
-                    stats["early_leave_minutes"],
+                    f"='{detail_sheet_name}'!A{DETAIL_ROW_NAME}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_TYPE}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_DUTY_TYPE}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_PRESENT_DAYS}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_ABSENT_DAYS}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_LATE_MINUTES}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_EARLY_LEAVE_MINUTES}",
                 ]
             )
+            name_cell = sheet.cell(row=sheet.max_row, column=1)
+            name_cell.hyperlink = f"#'{detail_sheet_name}'!A1"
+            name_cell.font = HYPERLINK_FONT
 
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         response["Content-Disposition"] = (
-            f"attachment; filename=attendance_summary_{year}_{month:02d}.xlsx"
+            f"attachment; filename=attendance_summary_{start_date}_{end_date}.xlsx"
         )
         workbook.save(response)
         return response

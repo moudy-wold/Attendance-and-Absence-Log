@@ -22,6 +22,10 @@ export default {
   "Name, username or phone": "Name, username or phone",
   "+ New account": "+ New account",
   "Export to Excel": "Export to Excel",
+  From: "From",
+  To: "To",
+  "Start date must be before or equal to the end date":
+    "Start date must be before or equal to the end date",
   Name: "Name",
   Phone: "Phone",
   Role: "Role",

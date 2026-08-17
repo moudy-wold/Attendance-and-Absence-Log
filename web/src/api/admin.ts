@@ -67,16 +67,19 @@ export async function getEmployee(id: number, year: number, month: number) {
   })
 }
 
-/** The export endpoint requires the auth header, so it can't be a plain <a href>. */
-export async function exportEmployeeAttendance(id: number, year: number, month: number) {
+/** The export endpoint requires the auth header, so it can't be a plain <a href>.
+ *  startDate/endDate are 'YYYY-MM-DD' strings (inclusive on both ends). */
+export async function exportEmployeeAttendance(id: number, startDate: string, endDate: string) {
   return await axiosInstance.get<Blob>(`/admin/employees/${id}/export/`, {
-    params: { year, month },
+    params: { start_date: startDate, end_date: endDate },
     responseType: 'blob',
   })
 }
 
 export interface ExportAttendanceSummaryParams extends ListEmployeesParams {
   lang: string
+  start_date?: string
+  end_date?: string
 }
 
 /** Exports the same filtered/searched results currently shown on the employees list, with column

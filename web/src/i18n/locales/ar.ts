@@ -23,6 +23,10 @@ export default {
   "Name, username or phone": "الاسم أو اسم المستخدم أو الهاتف",
   "+ New account": "+ حساب جديد",
   "Export to Excel": "تصدير إلى إكسل",
+  From: "من",
+  To: "إلى",
+  "Start date must be before or equal to the end date":
+    "يجب أن يكون تاريخ البداية قبل تاريخ النهاية أو يساويه",
   Name: "الاسم",
   Phone: "الهاتف",
   Role: "الدور",

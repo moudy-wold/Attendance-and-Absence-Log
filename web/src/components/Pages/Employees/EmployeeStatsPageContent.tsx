@@ -8,6 +8,7 @@ import { mapAttendance, type Attendance } from '../../../types/attendance'
 import { extractApiError } from '../../../lib/apiError'
 import { AdminHeader } from '../../Global/AdminHeader'
 import { Button } from '../../Global/Button'
+import { TextField } from '../../Global/TextField'
 
 function monthLabel(year: number, month: number, locale: string) {
   return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
@@ -22,6 +23,10 @@ function formatTime(iso: string | null, locale: string) {
 
 function formatDate(iso: string, locale: string) {
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(new Date(iso))
+}
+
+function toIsoDate(d: Date) {
+  return d.toISOString().slice(0, 10)
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -49,6 +54,10 @@ export function EmployeeStatsPageContent() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
+
+  // نطاق تصدير مستقل عن الشهر المعروض على الشاشة — يبدأ بحدود الشهر الحالي لكن يمكن للأدمن تغييره.
+  const [exportStartDate, setExportStartDate] = useState(toIsoDate(new Date(year, month - 1, 1)))
+  const [exportEndDate, setExportEndDate] = useState(toIsoDate(now))
 
   const [employee, setEmployee] = useState<User | null>(null)
   const [attendance, setAttendance] = useState<Attendance[] | null>(null)
@@ -88,16 +97,23 @@ export function EmployeeStatsPageContent() {
     const next = new Date(year, month - 1 + delta, 1)
     setYear(next.getFullYear())
     setMonth(next.getMonth() + 1)
+    setExportStartDate(toIsoDate(next))
+    setExportEndDate(toIsoDate(new Date(next.getFullYear(), next.getMonth() + 1, 0)))
   }
 
   async function handleExport() {
+    if (exportStartDate > exportEndDate) {
+      toast.error(t('Start date must be before or equal to the end date'))
+      return
+    }
+
     setIsExporting(true)
     try {
-      const { data } = await exportEmployeeAttendance(employeeId, year, month)
+      const { data } = await exportEmployeeAttendance(employeeId, exportStartDate, exportEndDate)
       const url = URL.createObjectURL(data)
       const link = document.createElement('a')
       link.href = url
-      link.download = `attendance-${employee?.username ?? employeeId}-${year}-${month}.xlsx`
+      link.download = `attendance-${employee?.username ?? employeeId}-${exportStartDate}_${exportEndDate}.xlsx`
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -143,6 +159,25 @@ export function EmployeeStatsPageContent() {
                     <path d="M12.5 15 7.5 10l5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3">
+              <div className="w-36">
+                <TextField
+                  label={t('From')}
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                />
+              </div>
+              <div className="w-36">
+                <TextField
+                  label={t('To')}
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                />
               </div>
               <Button
                 onClick={handleExport}

@@ -13,6 +13,10 @@ import { SelectField } from '../../Global/Select'
 
 type TriState = 'all' | 'yes' | 'no'
 
+function toIsoDate(d: Date) {
+  return d.toISOString().slice(0, 10)
+}
+
 export function EmployeesPageContent() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -25,6 +29,11 @@ export function EmployeesPageContent() {
   const [regularFilter, setRegularFilter] = useState<TriState>('all')
   const [activeFilter, setActiveFilter] = useState<TriState>('all')
   const [isExporting, setIsExporting] = useState(false)
+  const now = new Date()
+  const [exportStartDate, setExportStartDate] = useState(
+    toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+  )
+  const [exportEndDate, setExportEndDate] = useState(toIsoDate(now))
 
   const pageSize = 10
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
@@ -63,6 +72,11 @@ export function EmployeesPageContent() {
   }, [page, search, regularFilter, activeFilter, t])
 
   async function handleExport() {
+    if (exportStartDate > exportEndDate) {
+      toast.error(t('Start date must be before or equal to the end date'))
+      return
+    }
+
     setIsExporting(true)
     try {
       const { data } = await exportAttendanceSummary({
@@ -70,11 +84,13 @@ export function EmployeesPageContent() {
         is_regular: regularFilter === 'all' ? undefined : regularFilter === 'yes',
         is_active: activeFilter === 'all' ? undefined : activeFilter === 'yes',
         lang: i18n.language,
+        start_date: exportStartDate,
+        end_date: exportEndDate,
       })
       const url = URL.createObjectURL(data)
       const link = document.createElement('a')
       link.href = url
-      link.download = `attendance-summary-${new Date().toISOString().slice(0, 7)}.xlsx`
+      link.download = `attendance-summary-${exportStartDate}_${exportEndDate}.xlsx`
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -128,7 +144,23 @@ export function EmployeesPageContent() {
               </SelectField>
             </div>
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-36">
+              <TextField
+                label={t('From')}
+                type="date"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="w-36">
+              <TextField
+                label={t('To')}
+                type="date"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
             <Button
               onClick={handleExport}
               loading={isExporting}

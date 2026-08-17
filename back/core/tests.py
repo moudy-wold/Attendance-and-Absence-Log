@@ -9,7 +9,18 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import Attendance, QRToken, SystemSettings
-from .views import _working_days_in_range
+from .views import (
+    DETAIL_ROW_ABSENT_DAYS,
+    DETAIL_ROW_DUTY_TYPE,
+    DETAIL_ROW_EARLY_LEAVE_MINUTES,
+    DETAIL_ROW_LATE_MINUTES,
+    DETAIL_ROW_NAME,
+    DETAIL_ROW_PHONE,
+    DETAIL_ROW_PRESENT_DAYS,
+    DETAIL_ROW_TYPE,
+    _count_working_days_between,
+    _working_days_in_range,
+)
 
 
 class GenerateQRTokenTests(APITestCase):
@@ -320,13 +331,37 @@ class EmployeeExportAttendanceTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_invalid_year_returns_400_not_500(self):
-        response = self.client.get(self.url, {"year": "abc"})
+    def test_invalid_start_date_returns_400_not_500(self):
+        response = self.client.get(self.url, {"start_date": "not-a-date"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_out_of_range_month_rejected(self):
-        response = self.client.get(self.url, {"month": 13})
+    def test_start_date_after_end_date_rejected(self):
+        response = self.client.get(
+            self.url, {"start_date": "2026-08-20", "end_date": "2026-08-01"}
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_only_records_within_date_range_are_included(self):
+        Attendance.objects.create(
+            user=self.employee, date=date(2026, 1, 5), check_in=timezone.now()
+        )
+        Attendance.objects.create(
+            user=self.employee, date=date(2026, 1, 15), check_in=timezone.now()
+        )
+        Attendance.objects.create(
+            user=self.employee, date=date(2026, 2, 1), check_in=timezone.now()
+        )
+
+        response = self.client.get(
+            self.url, {"start_date": "2026-01-01", "end_date": "2026-01-31"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        workbook = load_workbook(BytesIO(response.content))
+        rows = list(workbook.active.iter_rows(values_only=True))
+        self.assertEqual(len(rows), 3)  # عنوان + سطران ضمن يناير فقط
+        self.assertEqual(rows[1][0], "2026-01-05")
+        self.assertEqual(rows[2][0], "2026-01-15")
 
 
 class WorkingDaysCalculationTests(APITestCase):
@@ -337,6 +372,26 @@ class WorkingDaysCalculationTests(APITestCase):
     def test_partial_month_up_to_a_given_day(self):
         # أول أسبوع من يناير 2024 (1 اثنين إلى 7 أحد): 5 أيام عمل + عطلة نهاية الأسبوع
         self.assertEqual(_working_days_in_range(2024, 1, 7), 5)
+
+
+class DateRangeWorkingDaysTests(APITestCase):
+    def test_excludes_weekends_within_a_free_range(self):
+        # 2024-01-01 (اثنين) إلى 2024-01-07 (أحد): 5 أيام عمل
+        self.assertEqual(_count_working_days_between(date(2024, 1, 1), date(2024, 1, 7)), 5)
+
+    def test_caps_at_today_when_range_extends_into_the_future(self):
+        today = timezone.localdate()
+        future_end = today + timedelta(days=30)
+        self.assertEqual(
+            _count_working_days_between(today, future_end),
+            _count_working_days_between(today, today),
+        )
+
+    def test_returns_zero_for_a_fully_future_range(self):
+        today = timezone.localdate()
+        start = today + timedelta(days=5)
+        end = today + timedelta(days=10)
+        self.assertEqual(_count_working_days_between(start, end), 0)
 
 
 class MonthlyAttendanceSummaryExportTests(APITestCase):
@@ -363,8 +418,14 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_invalid_year_returns_400(self):
-        response = self.client.get(self.url, {"year": "abc"})
+    def test_invalid_start_date_returns_400(self):
+        response = self.client.get(self.url, {"start_date": "abc"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_start_date_after_end_date_rejected(self):
+        response = self.client.get(
+            self.url, {"start_date": "2024-01-31", "end_date": "2024-01-01"}
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_report_contents_for_past_month(self):
@@ -383,11 +444,14 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
             check_out=timezone.make_aware(datetime(2024, 1, 9, 16, 30)),
         )
 
-        response = self.client.get(self.url, {"year": 2024, "month": 1})
+        response = self.client.get(
+            self.url, {"start_date": "2024-01-01", "end_date": "2024-01-31"}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         workbook = load_workbook(BytesIO(response.content))
-        rows = list(workbook.active.iter_rows(values_only=True))
+        summary_sheet = workbook.active
+        rows = list(summary_sheet.iter_rows(values_only=True))
         self.assertEqual(
             rows[0],
             (
@@ -401,15 +465,79 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
             ),
         )
 
-        employee_row = rows[1]
-        working_days = _working_days_in_range(2024, 1, 31)
-        self.assertEqual(employee_row[0], "Test Employee")
-        self.assertIsNone(employee_row[1])  # نوع الموظف (غير محدَّد)
-        self.assertEqual(employee_row[2], "دوام كامل")
-        self.assertEqual(employee_row[3], 2)  # أيام دوام
-        self.assertEqual(employee_row[4], working_days - 2)  # أيام غياب
-        self.assertEqual(employee_row[5], 15)  # دقائق تأخير (يوم الاثنين فقط)
-        self.assertEqual(employee_row[6], 30)  # دقائق انصراف مبكر (يوم الثلاثاء فقط)
+        # القيم الفعلية تُخزَّن في ورقة الموظف الفرعية (مصدر الحقيقة الوحيد)، وورقة الملخص
+        # تعرضها فقط عبر صيغ ربط (انظر الاختبار التالي).
+        detail_sheet = workbook["Test Employee"]
+        working_days = _count_working_days_between(date(2024, 1, 1), date(2024, 1, 31))
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TYPE, column=2).value, "غير محدد")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_DUTY_TYPE, column=2).value, "دوام كامل")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=2).value, 2)
+        self.assertEqual(
+            detail_sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=2).value, working_days - 2
+        )
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=2).value, 15)
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=2).value, 30)
+
+    def test_summary_sheet_links_to_employee_detail_sheet(self):
+        self.employee.type = 3
+        self.employee.phone = "0912345678"
+        self.employee.save()
+        Attendance.objects.create(
+            user=self.employee,
+            date=date(2024, 1, 8),
+            check_in=timezone.make_aware(datetime(2024, 1, 8, 9, 15)),
+            check_out=timezone.make_aware(datetime(2024, 1, 8, 17, 0)),
+        )
+
+        response = self.client.get(
+            self.url, {"start_date": "2024-01-01", "end_date": "2024-01-31"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        workbook = load_workbook(BytesIO(response.content))
+        summary_sheet = workbook.active
+
+        # صف الموظف بورقة الملخص يجب أن يكون كله صيغ ربط بورقته الفرعية، وليس قيمًا ثابتة —
+        # هذا ما يجعل تعديل القيمة بالورقة الفرعية ينعكس تلقائيًا هنا عند فتح الملف بإكسل.
+        name_cell = summary_sheet["A2"]
+        self.assertEqual(name_cell.value, f"='Test Employee'!A{DETAIL_ROW_NAME}")
+        self.assertIsNotNone(name_cell.hyperlink)
+        self.assertEqual(summary_sheet["B2"].value, f"='Test Employee'!B{DETAIL_ROW_TYPE}")
+        self.assertEqual(summary_sheet["C2"].value, f"='Test Employee'!B{DETAIL_ROW_DUTY_TYPE}")
+        self.assertEqual(summary_sheet["D2"].value, f"='Test Employee'!B{DETAIL_ROW_PRESENT_DAYS}")
+        self.assertEqual(summary_sheet["E2"].value, f"='Test Employee'!B{DETAIL_ROW_ABSENT_DAYS}")
+        self.assertEqual(summary_sheet["F2"].value, f"='Test Employee'!B{DETAIL_ROW_LATE_MINUTES}")
+        self.assertEqual(
+            summary_sheet["G2"].value, f"='Test Employee'!B{DETAIL_ROW_EARLY_LEAVE_MINUTES}"
+        )
+
+        self.assertIn("Test Employee", workbook.sheetnames)
+        detail_sheet = workbook["Test Employee"]
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_NAME, column=1).value, "Test Employee")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_PHONE, column=2).value, "0912345678")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TYPE, column=2).value, 3)
+        detail_rows = list(detail_sheet.iter_rows(values_only=True))
+        self.assertIn(("التاريخ", "وقت الحضور", "وقت الانصراف"), detail_rows)
+        self.assertIn(("2024-01-08", "09:15:00", "17:00:00"), detail_rows)
+
+    def test_duplicate_employee_names_get_distinct_detail_sheets(self):
+        User.objects.create_user(
+            username="emp2",
+            password="x",
+            is_employee=True,
+            first_name="Test",
+            last_name="Employee",
+        )
+
+        response = self.client.get(
+            self.url, {"start_date": "2024-01-01", "end_date": "2024-01-31"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        workbook = load_workbook(BytesIO(response.content))
+        sheet_names = [name for name in workbook.sheetnames if name != workbook.sheetnames[0]]
+        self.assertEqual(len(sheet_names), len(set(sheet_names)))
+        self.assertEqual(len(sheet_names), 2)
 
 
 class SystemSettingsTests(APITestCase):
