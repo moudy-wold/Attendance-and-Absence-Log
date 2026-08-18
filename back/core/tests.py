@@ -249,9 +249,12 @@ class EmployeeAdminViewTests(APITestCase):
             check_out=timezone.make_aware(datetime(2024, 1, 8, 16, 30)),
         )
 
-        response = self.client.get(f"/api/admin/employees/{self.employee.pk}/", {"year": 2024, "month": 1})
+        response = self.client.get(
+            f"/api/admin/employees/{self.employee.pk}/",
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        working_days = _working_days_in_range(2024, 1, 31)
+        working_days = _count_working_days_between(date(2024, 1, 1), date(2024, 1, 31))
         self.assertEqual(response.data["present_days"], 1)
         self.assertEqual(response.data["absent_days"], working_days - 1)
         self.assertEqual(response.data["late_minutes"], 15)

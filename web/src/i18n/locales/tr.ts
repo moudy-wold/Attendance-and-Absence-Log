@@ -89,7 +89,9 @@ export default {
   Date: "Tarih",
   "Check in": "Giriş",
   "Check out": "Çıkış",
-  "No attendance records for this month": "Bu ay için devam kaydı yok",
+  Sessions: "Giriş/Çıkış sayısı",
+  Close: "Kapat",
+  "No attendance records for this period": "Bu dönem için devam kaydı yok",
 
   "Attendance kiosk": "Devam ekranı",
   "Generating…": "Oluşturuluyor…",

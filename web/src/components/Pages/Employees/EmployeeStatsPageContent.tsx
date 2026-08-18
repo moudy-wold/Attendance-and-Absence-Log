@@ -9,12 +9,7 @@ import { extractApiError } from '../../../lib/apiError'
 import { AdminHeader } from '../../Global/AdminHeader'
 import { Button } from '../../Global/Button'
 import { TextField } from '../../Global/TextField'
-
-function monthLabel(year: number, month: number, locale: string) {
-  return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
-    new Date(year, month - 1, 1),
-  )
-}
+import { DayAttendanceModal } from './DayAttendanceModal'
 
 function formatTime(iso: string | null, locale: string) {
   if (!iso) return '—'
@@ -27,6 +22,41 @@ function formatDate(iso: string, locale: string) {
 
 function toIsoDate(d: Date) {
   return d.toISOString().slice(0, 10)
+}
+
+interface DayAttendance {
+  date: string
+  firstCheckIn: string
+  lastCheckOut: string | null
+  checkInCount: number
+  checkOutCount: number
+  sessions: Attendance[]
+}
+
+function groupAttendanceByDay(records: Attendance[]): DayAttendance[] {
+  const byDay = new Map<string, Attendance[]>()
+  for (const record of records) {
+    const sessions = byDay.get(record.date)
+    if (sessions) sessions.push(record)
+    else byDay.set(record.date, [record])
+  }
+
+  return Array.from(byDay.entries())
+    .map(([date, sessions]) => {
+      const checkOuts = sessions.filter((s) => s.checkOut !== null)
+      return {
+        date,
+        firstCheckIn: sessions.reduce((min, s) => (s.checkIn < min ? s.checkIn : min), sessions[0].checkIn),
+        lastCheckOut:
+          checkOuts.length === 0
+            ? null
+            : checkOuts.reduce((max, s) => (s.checkOut! > max ? s.checkOut! : max), checkOuts[0].checkOut!),
+        checkInCount: sessions.length,
+        checkOutCount: checkOuts.length,
+        sessions,
+      }
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -52,22 +82,21 @@ export function EmployeeStatsPageContent() {
   const employeeId = Number(id)
 
   const now = new Date()
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth() + 1)
 
-  // نطاق تصدير مستقل عن الشهر المعروض على الشاشة — يبدأ بحدود الشهر الحالي لكن يمكن للأدمن تغييره.
-  const [exportStartDate, setExportStartDate] = useState(toIsoDate(new Date(year, month - 1, 1)))
-  const [exportEndDate, setExportEndDate] = useState(toIsoDate(now))
+  // نطاق تاريخ وحيد يحدد كلًا من البيانات المعروضة في الجدول والتصدير إلى إكسل.
+  const [startDate, setStartDate] = useState(toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)))
+  const [endDate, setEndDate] = useState(toIsoDate(now))
 
   const [employee, setEmployee] = useState<User | null>(null)
   const [attendance, setAttendance] = useState<Attendance[] | null>(null)
   const [stats, setStats] = useState<MonthStats | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [openDay, setOpenDay] = useState<DayAttendance | null>(null)
 
   const load = useCallback(() => {
     setAttendance(null)
     setStats(null)
-    getEmployee(employeeId, year, month)
+    getEmployee(employeeId, startDate, endDate)
       .then(({ data }) => {
         const {
           attendance: rawAttendance,
@@ -87,33 +116,25 @@ export function EmployeeStatsPageContent() {
         })
       })
       .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
-  }, [employeeId, year, month, t])
+  }, [employeeId, startDate, endDate, t])
 
   useEffect(() => {
     load()
   }, [load])
 
-  function changeMonth(delta: number) {
-    const next = new Date(year, month - 1 + delta, 1)
-    setYear(next.getFullYear())
-    setMonth(next.getMonth() + 1)
-    setExportStartDate(toIsoDate(next))
-    setExportEndDate(toIsoDate(new Date(next.getFullYear(), next.getMonth() + 1, 0)))
-  }
-
   async function handleExport() {
-    if (exportStartDate > exportEndDate) {
+    if (startDate > endDate) {
       toast.error(t('Start date must be before or equal to the end date'))
       return
     }
 
     setIsExporting(true)
     try {
-      const { data } = await exportEmployeeAttendance(employeeId, exportStartDate, exportEndDate)
+      const { data } = await exportEmployeeAttendance(employeeId, startDate, endDate)
       const url = URL.createObjectURL(data)
       const link = document.createElement('a')
       link.href = url
-      link.download = `attendance-${employee?.username ?? employeeId}-${exportStartDate}_${exportEndDate}.xlsx`
+      link.download = `attendance-${employee?.username ?? employeeId}-${startDate}_${endDate}.xlsx`
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -122,6 +143,8 @@ export function EmployeeStatsPageContent() {
       setIsExporting(false)
     }
   }
+
+  const days = attendance ? groupAttendanceByDay(attendance) : null
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
@@ -134,49 +157,21 @@ export function EmployeeStatsPageContent() {
       ) : (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
           <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => changeMonth(-1)}
-                  aria-label={t('Back')}
-                  className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" className="size-3.5 rtl:-scale-x-100" aria-hidden="true">
-                    <path d="M12.5 15 7.5 10l5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <span className="w-32 text-center text-sm font-medium text-neutral-800">
-                  {monthLabel(year, month, i18n.language)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => changeMonth(1)}
-                  aria-label={t('Next')}
-                  className="flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" className="size-3.5 -scale-x-100 rtl:scale-x-100" aria-hidden="true">
-                    <path d="M12.5 15 7.5 10l5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3">
+            <div className="flex flex-wrap items-end gap-2">
               <div className="w-36">
                 <TextField
                   label={t('From')}
                   type="date"
-                  value={exportStartDate}
-                  onChange={(e) => setExportStartDate(e.target.value)}
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
               <div className="w-36">
                 <TextField
                   label={t('To')}
                   type="date"
-                  value={exportEndDate}
-                  onChange={(e) => setExportEndDate(e.target.value)}
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
               <Button
@@ -204,31 +199,48 @@ export function EmployeeStatsPageContent() {
                     <th className="px-3 py-2.5 text-start font-medium">{t('Date')}</th>
                     <th className="px-3 py-2.5 text-start font-medium">{t('Check in')}</th>
                     <th className="px-3 py-2.5 text-start font-medium">{t('Check out')}</th>
+                    <th className="px-3 py-2.5 text-start font-medium">{t('Sessions')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {attendance === null &&
+                  {days === null &&
                     Array.from({ length: 3 }).map((_, i) => (
                       <tr key={i} className="border-b border-neutral-50 last:border-0">
-                        <td className="px-3 py-3" colSpan={3}>
+                        <td className="px-3 py-3" colSpan={4}>
                           <div className="h-3.5 w-full animate-pulse rounded bg-neutral-100" />
                         </td>
                       </tr>
                     ))}
 
-                  {attendance !== null && attendance.length === 0 && (
+                  {days !== null && days.length === 0 && (
                     <tr>
-                      <td className="px-3 py-6 text-center text-sm text-neutral-400" colSpan={3}>
-                        {t('No attendance records for this month')}
+                      <td className="px-3 py-6 text-center text-sm text-neutral-400" colSpan={4}>
+                        {t('No attendance records for this period')}
                       </td>
                     </tr>
                   )}
 
-                  {attendance?.map((record) => (
-                    <tr key={record.id} className="border-b border-neutral-50 last:border-0">
-                      <td className="px-3 py-2.5 text-neutral-700">{formatDate(record.date, i18n.language)}</td>
-                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(record.checkIn, i18n.language)}</td>
-                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(record.checkOut, i18n.language)}</td>
+                  {days?.map((day) => (
+                    <tr key={day.date} className="border-b border-neutral-50 last:border-0">
+                      <td className="px-3 py-2.5 text-neutral-700">{formatDate(day.date, i18n.language)}</td>
+                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(day.firstCheckIn, i18n.language)}</td>
+                      <td className="px-3 py-2.5 text-neutral-700">{formatTime(day.lastCheckOut, i18n.language)}</td>
+                      <td className="px-3 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setOpenDay(day)}
+                          className="flex items-center gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-neutral-100"
+                        >
+                          <span className="flex items-center gap-1 text-xs font-medium text-neutral-600">
+                            <span className="size-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                            {day.checkInCount}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs font-medium text-neutral-600">
+                            <span className="size-2 shrink-0 rounded-full bg-red-500" aria-hidden="true" />
+                            {day.checkOutCount}
+                          </span>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -236,6 +248,10 @@ export function EmployeeStatsPageContent() {
             </div>
           </section>
         </div>
+      )}
+
+      {openDay && (
+        <DayAttendanceModal date={openDay.date} sessions={openDay.sessions} onClose={() => setOpenDay(null)} />
       )}
     </div>
   )

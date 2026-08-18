@@ -162,7 +162,7 @@ export function SettingsPageContent() {
                 <p className="mt-1.5 text-xs text-neutral-500">{t('Minimum time that must pass between check-in and check-out for the same session. Prevents an accidental double-scan from recording an instant check-out.')}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div>
                   <TextField
                     label={t('Official work start time')}
@@ -188,7 +188,7 @@ export function SettingsPageContent() {
                   />
                 </div>
               </div>
-              <p className="-mt-2 text-xs text-neutral-500">{t('Used to calculate late minutes in the attendance summary report.')}</p>
+              <p className="-mt-2 text-xs text-neutral-500">{t('Used to calculate late minutes in the attendance summary report.')}</p> */}
             </>
           )}
 
@@ -203,8 +203,8 @@ export function SettingsPageContent() {
         description={
           pendingBlockValue
             ? t(
-                'All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?',
-              )
+              'All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?',
+            )
             : t('Irregular employees will be able to sign in again. Continue?')
         }
         confirmText={pendingBlockValue ? t('Block them') : t('Allow them')}

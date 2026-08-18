@@ -705,20 +705,20 @@ class EntryUserListView(generics.ListAPIView):
 class EmployeeDetailView(APIView):
     permission_classes = [IsAdminUser]
 
-    @extend_schema(parameters=YEAR_MONTH_PARAMETERS, responses={200: EmployeeAttendanceSerializer})
+    @extend_schema(parameters=DATE_RANGE_PARAMETERS, responses={200: EmployeeAttendanceSerializer})
     def get(self, request, pk):
         employee = get_object_or_404(User, pk=pk, is_employee=True)
-        year, month = _resolve_year_month(request)
+        start_date, end_date = _resolve_date_range(request)
         attendance = Attendance.objects.filter(
-            user=employee, date__year=year, date__month=month
+            user=employee, date__gte=start_date, date__lte=end_date
         ).order_by("date")
 
         settings_obj = SystemSettings.get_solo()
-        working_days = _resolve_working_days(year, month)
-        stats = _employee_month_stats(
+        working_days = _count_working_days_between(start_date, end_date)
+        stats = _employee_range_stats(
             employee,
-            year,
-            month,
+            start_date,
+            end_date,
             work_start_time=settings_obj.work_start_time,
             work_end_time=settings_obj.work_end_time,
             working_days=working_days,

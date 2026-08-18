@@ -82,8 +82,9 @@ export default {
   Date: "Date",
   "Check in": "Check in",
   "Check out": "Check out",
-  "No attendance records for this month":
-    "No attendance records for this month",
+  Sessions: "Sessions",
+  Close: "Close",
+  "No attendance records for this period": "No attendance records for this period",
   "Attendance kiosk": "Attendance kiosk",
   "Generating…": "Generating…",
   "Refreshes in": "Refreshes in",

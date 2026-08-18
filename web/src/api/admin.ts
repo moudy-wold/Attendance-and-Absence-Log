@@ -65,9 +65,10 @@ export async function listEntryUsers(params: ListEmployeesParams = {}) {
   return await axiosInstance.get<Paginated<RawUser>>('/admin/entry-users/', { params })
 }
 
-export async function getEmployee(id: number, year: number, month: number) {
+/** startDate/endDate are 'YYYY-MM-DD' strings (inclusive on both ends). */
+export async function getEmployee(id: number, startDate: string, endDate: string) {
   return await axiosInstance.get<RawEmployeeAttendance>(`/admin/employees/${id}/`, {
-    params: { year, month },
+    params: { start_date: startDate, end_date: endDate },
   })
 }
 

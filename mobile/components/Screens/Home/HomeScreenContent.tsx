@@ -124,8 +124,8 @@ export function HomeScreenContent() {
         <Text style={tw`text-center text-sm text-neutral-600 dark:text-neutral-300`}>
           {t('Camera access is needed to scan the attendance code.')}
         </Text>
-        <Button onPress={requestPermission}>{t('Allow camera access')}</Button>
-        <Button variant="secondary" onPress={logout}>
+        <Button style={tw`px-1`} onPress={requestPermission}>{t('Allow camera access')}</Button>
+        <Button style={tw`px-1`} variant="secondary" onPress={logout}>
           {t('Sign out')}
         </Button>
       </View>
