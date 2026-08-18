@@ -17,7 +17,7 @@ export default {
   Admin: "Admin",
   Regular: "Regular",
   Irregular: "Irregular",
-  "Employee type: {{type}}": "Employee type: {{type}}",
+  "Duty type: {{type}}": "Duty type: {{type}}",
   "Camera access is needed to scan the attendance code.":
     "Camera access is needed to scan the attendance code.",
   "Allow camera access": "Allow camera access",

@@ -182,7 +182,7 @@ export function EmployeesPageContent() {
                 <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Role')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Type')}</th>
-                <th className="px-4 py-3 text-start font-medium">{t('Employee type')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('Duty type')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Status')}</th>
                 <th className="px-4 py-3 text-start font-medium" >{t('Actions')}</th>
               </tr>

@@ -19,7 +19,7 @@ export default {
   Admin: "Yönetici",
   Regular: "Kadrolu",
   Irregular: "Geçici",
-  "Employee type: {{type}}": "Çalışan türü: {{type}}",
+  "Duty type: {{type}}": "Çalışma türü: {{type}}",
   "Camera access is needed to scan the attendance code.":
     "Devam kodunu taramak için kamera erişimi gerekiyor.",
   "Allow camera access": "Kamera erişimine izin ver",

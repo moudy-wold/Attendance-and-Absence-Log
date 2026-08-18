@@ -52,7 +52,7 @@ export function EmployeeDetailPageContent() {
           lastName: mapped.lastName,
           phone: mapped.phone,
           email: mapped.email ?? '',
-          type: mapped.type !== null ? String(mapped.type) : '',
+          type: mapped.type ?? '',
         })
       })
       .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
@@ -90,7 +90,7 @@ export function EmployeeDetailPageContent() {
         last_name: infoForm.lastName.trim(),
         phone: infoForm.phone.trim(),
         email: infoForm.email.trim() || undefined,
-        type: infoForm.type.trim() ? Number(infoForm.type.trim()) : null,
+        type: infoForm.type.trim() || null,
       })
       setEmployee(mapUser(data))
       toast.success(t('Saved'))
@@ -210,10 +210,9 @@ export function EmployeeDetailPageContent() {
             />
 
             <TextField
-              label={t('Employee type (optional)')}
+              label={t('Duty type (optional)')}
               value={infoForm.type}
               onChange={(e) => setInfoForm({ ...infoForm, type: e.target.value })}
-              type="number"
             />
 
             <Button type="submit" loading={isSavingInfo} className="mt-1 w-fit px-5">

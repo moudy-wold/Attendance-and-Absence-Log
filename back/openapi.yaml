@@ -101,7 +101,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: integer
+          type: string
       - in: query
         name: username
         schema:
@@ -241,7 +241,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: integer
+          type: string
       - in: query
         name: username
         schema:
@@ -962,12 +962,10 @@ components:
           nullable: true
           maxLength: 20
         type:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          type: string
           nullable: true
-          description: تصنيف الموظف داخل الشركة
+          description: نوع الدوام
+          maxLength: 50
         is_admin:
           type: boolean
         is_entry:
@@ -976,7 +974,6 @@ components:
           type: boolean
         is_regular:
           type: boolean
-          description: True = دوام كامل، False = دوام جزئي
         is_active:
           type: boolean
           title: Active
@@ -1127,6 +1124,12 @@ components:
           format: time
           description: وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر
             في التقارير
+        block_irregular_employees:
+          type: boolean
+          description: لما تكون مفعّلة، الموظفون غير النظاميين (is_regular=False)
+            ما يقدرون يسجّلون دخول إطلاقًا، وأي جلسة مفتوحة عندهم حاليًا تُرفض بأول
+            طلب جاي منهم — بنفس رسالة خطأ اسم المستخدم/كلمة المرور الخاطئة، حتى ما
+            يعرفوا إنه تم حظرهم تحديدًا.
     PatchedUpdateUser:
       type: object
       description: |-
@@ -1152,12 +1155,10 @@ components:
           nullable: true
           maxLength: 20
         type:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          type: string
           nullable: true
-          description: تصنيف الموظف داخل الشركة
+          description: نوع الدوام
+          maxLength: 50
         is_admin:
           type: boolean
         is_entry:
@@ -1166,7 +1167,6 @@ components:
           type: boolean
         is_regular:
           type: boolean
-          description: True = دوام كامل، False = دوام جزئي
         is_active:
           type: boolean
           title: Active
@@ -1235,12 +1235,10 @@ components:
           nullable: true
           maxLength: 20
         type:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          type: string
           nullable: true
-          description: تصنيف الموظف داخل الشركة
+          description: نوع الدوام
+          maxLength: 50
         is_admin:
           type: boolean
         is_entry:
@@ -1249,7 +1247,6 @@ components:
           type: boolean
         is_regular:
           type: boolean
-          description: True = دوام كامل، False = دوام جزئي
       required:
       - first_name
       - id
@@ -1274,6 +1271,12 @@ components:
           format: time
           description: وقت انتهاء الدوام الرسمي — يُستخدم لحساب دقائق الانصراف المبكر
             في التقارير
+        block_irregular_employees:
+          type: boolean
+          description: لما تكون مفعّلة، الموظفون غير النظاميين (is_regular=False)
+            ما يقدرون يسجّلون دخول إطلاقًا، وأي جلسة مفتوحة عندهم حاليًا تُرفض بأول
+            طلب جاي منهم — بنفس رسالة خطأ اسم المستخدم/كلمة المرور الخاطئة، حتى ما
+            يعرفوا إنه تم حظرهم تحديدًا.
       required:
       - min_session_duration_seconds
       - qr_token_lifetime_seconds
@@ -1326,12 +1329,10 @@ components:
           nullable: true
           maxLength: 20
         type:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          type: string
           nullable: true
-          description: تصنيف الموظف داخل الشركة
+          description: نوع الدوام
+          maxLength: 50
         is_admin:
           type: boolean
         is_entry:
@@ -1340,7 +1341,6 @@ components:
           type: boolean
         is_regular:
           type: boolean
-          description: True = دوام كامل، False = دوام جزئي
         is_active:
           type: boolean
           title: Active
@@ -1388,12 +1388,10 @@ components:
           nullable: true
           maxLength: 20
         type:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          type: string
           nullable: true
-          description: تصنيف الموظف داخل الشركة
+          description: نوع الدوام
+          maxLength: 50
         is_admin:
           type: boolean
         is_entry:
@@ -1402,7 +1400,6 @@ components:
           type: boolean
         is_regular:
           type: boolean
-          description: True = دوام كامل، False = دوام جزئي
         is_active:
           type: boolean
           title: Active

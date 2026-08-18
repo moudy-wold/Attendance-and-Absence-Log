@@ -55,8 +55,6 @@ export function CreateEmployeePageContent() {
     if (!form.firstName.trim()) next.firstName = t('Please enter the first name')
     if (!form.lastName.trim()) next.lastName = t('Please enter the last name')
     if (!form.phone.trim()) next.phone = t('Please enter a phone number')
-    if (form.type.trim() && (!/^\d+$/.test(form.type.trim())))
-      next.type = t('Employee type must be a number')
     if (form.password && form.password.length < 8) next.password = t('Password must be at least 8 characters')
     return next
   }
@@ -80,7 +78,7 @@ export function CreateEmployeePageContent() {
         first_name: form.firstName.trim(),
         last_name: form.lastName.trim(),
         phone: form.phone.trim(),
-        type: form.type.trim() ? Number(form.type.trim()) : undefined,
+        type: form.type.trim() || undefined,
         is_employee: form.accountType === 'employee',
         is_entry: form.accountType === 'entry',
         is_regular: form.accountType === 'employee' ? form.isRegular : true,
@@ -134,11 +132,10 @@ export function CreateEmployeePageContent() {
         />
 
         <TextField
-          label={t('Employee type (optional)')}
+          label={t('Duty type (optional)')}
           value={form.type}
           onChange={handleChange('type')}
           error={errors.type}
-          type="number"
         />
 
         <div>

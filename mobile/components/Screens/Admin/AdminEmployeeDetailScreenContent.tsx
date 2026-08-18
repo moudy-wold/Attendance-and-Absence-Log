@@ -86,7 +86,7 @@ export function AdminEmployeeDetailScreenContent() {
                 {employee.isActive ? t('Active') : t('Suspended')}
               </Badge>
               {employee.type !== null && (
-                <Badge tone="neutral">{t('Employee type: {{type}}', { type: employee.type })}</Badge>
+                <Badge tone="neutral">{t('Duty type: {{type}}', { type: employee.type })}</Badge>
               )}
             </View>
             <Text style={tw`text-xs text-neutral-500`}>

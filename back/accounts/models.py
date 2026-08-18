@@ -4,16 +4,14 @@ from django.db import models
 
 class User(AbstractUser):
     phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
-    type = models.PositiveIntegerField(
-        null=True, blank=True, help_text="تصنيف الموظف داخل الشركة"
+    type = models.CharField(
+        max_length=50, null=True, blank=True, help_text="نوع الدوام"
     )
 
     is_admin = models.BooleanField(default=False)
     is_entry = models.BooleanField(default=False)
     is_employee = models.BooleanField(default=False)
-    is_regular = models.BooleanField(
-        default=True, help_text="True = دوام كامل، False = دوام جزئي"
-    )
+    is_regular = models.BooleanField(default=True)
     device_id = models.CharField(
         max_length=255,
         null=True,
@@ -26,6 +24,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.phone = self.phone or None
+        self.type = self.type or None
         super().save(*args, **kwargs)
 
     def __str__(self):

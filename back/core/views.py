@@ -353,15 +353,12 @@ EXPORT_SUMMARY_LABELS = {
     "ar": {
         "columns": [
             "اسم الموظف",
-            "نوع الموظف",
             "نوع الدوام",
             "أيام الدوام",
             "أيام الغياب",
             "دقائق التأخير",
             "دقائق الانصراف المبكر",
         ],
-        "full_time": "دوام كامل",
-        "part_time": "دوام جزئي",
         "phone": "الهاتف",
         "not_set": "غير محدد",
         "detail_columns": ["التاريخ", "وقت الحضور", "وقت الانصراف"],
@@ -370,15 +367,12 @@ EXPORT_SUMMARY_LABELS = {
     "en": {
         "columns": [
             "Employee name",
-            "Employee type",
             "Duty type",
             "Days present",
             "Days absent",
             "Late minutes",
             "Early leave minutes",
         ],
-        "full_time": "Full-time",
-        "part_time": "Part-time",
         "phone": "Phone",
         "not_set": "Not set",
         "detail_columns": ["Date", "Check-in", "Check-out"],
@@ -387,15 +381,12 @@ EXPORT_SUMMARY_LABELS = {
     "tr": {
         "columns": [
             "Çalışan adı",
-            "Çalışan türü",
             "Çalışma türü",
             "Çalışılan gün",
             "Devamsızlık günü",
             "Geç kalma (dakika)",
             "Erken çıkış (dakika)",
         ],
-        "full_time": "Tam zamanlı",
-        "part_time": "Yarı zamanlı",
         "phone": "Telefon",
         "not_set": "Belirtilmemiş",
         "detail_columns": ["Tarih", "Giriş saati", "Çıkış saati"],
@@ -428,11 +419,10 @@ HYPERLINK_FONT = Font(color="0563C1", underline="single")
 DETAIL_ROW_NAME = 2
 DETAIL_ROW_PHONE = 3
 DETAIL_ROW_TYPE = 4
-DETAIL_ROW_DUTY_TYPE = 5
-DETAIL_ROW_PRESENT_DAYS = 6
-DETAIL_ROW_ABSENT_DAYS = 7
-DETAIL_ROW_LATE_MINUTES = 8
-DETAIL_ROW_EARLY_LEAVE_MINUTES = 9
+DETAIL_ROW_PRESENT_DAYS = 5
+DETAIL_ROW_ABSENT_DAYS = 6
+DETAIL_ROW_LATE_MINUTES = 7
+DETAIL_ROW_EARLY_LEAVE_MINUTES = 8
 
 
 def _write_employee_detail_sheet(
@@ -453,18 +443,13 @@ def _write_employee_detail_sheet(
         row=DETAIL_ROW_TYPE, column=2,
         value=employee.type if employee.type is not None else labels["not_set"],
     )
-    sheet.cell(row=DETAIL_ROW_DUTY_TYPE, column=1, value=labels["columns"][2])
-    sheet.cell(
-        row=DETAIL_ROW_DUTY_TYPE, column=2,
-        value=labels["full_time"] if employee.is_regular else labels["part_time"],
-    )
-    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=1, value=labels["columns"][3])
+    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=1, value=labels["columns"][2])
     sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=2, value=stats["present_days"])
-    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=1, value=labels["columns"][4])
+    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=1, value=labels["columns"][3])
     sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=2, value=stats["absent_days"])
-    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=1, value=labels["columns"][5])
+    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=1, value=labels["columns"][4])
     sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=2, value=stats["late_minutes"])
-    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=1, value=labels["columns"][6])
+    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=1, value=labels["columns"][5])
     sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=2, value=stats["early_leave_minutes"])
 
     sheet.append([])
@@ -538,7 +523,6 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
                 [
                     f"='{detail_sheet_name}'!A{DETAIL_ROW_NAME}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_TYPE}",
-                    f"='{detail_sheet_name}'!B{DETAIL_ROW_DUTY_TYPE}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_PRESENT_DAYS}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_ABSENT_DAYS}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_LATE_MINUTES}",

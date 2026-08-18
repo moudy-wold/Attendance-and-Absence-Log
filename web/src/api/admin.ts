@@ -8,7 +8,7 @@ export interface RegisterPayload {
   first_name: string
   last_name: string
   phone: string
-  type?: number | null
+  type?: string | null
   is_employee: boolean
   is_entry: boolean
   is_regular: boolean
@@ -23,7 +23,7 @@ export interface UpdateUserPayload {
   last_name?: string
   email?: string
   phone?: string
-  type?: number | null
+  type?: string | null
   is_regular?: boolean
   is_active?: boolean
   device_id?: string | null

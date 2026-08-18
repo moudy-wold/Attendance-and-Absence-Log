@@ -6,7 +6,7 @@ export interface User {
   fullName: string
   email: string | null
   phone: string
-  type: number | null
+  type: string | null
   isAdmin: boolean
   isEntry: boolean
   isActive: boolean
@@ -24,7 +24,7 @@ export interface RawUser {
   last_name: string
   email: string | null
   phone: string
-  type: number | null
+  type: string | null
   is_admin: boolean
   is_entry: boolean
   is_active: boolean
