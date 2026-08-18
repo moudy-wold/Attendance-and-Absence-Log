@@ -112,7 +112,7 @@ export function EmployeesPageContent() {
                 label={t('Search')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('Name, username or phone')}
+                placeholder={t('Name, username, phone or national ID')}
               />
             </div>
             <div className="w-40">
@@ -180,6 +180,7 @@ export function EmployeesPageContent() {
               <tr className="border-b border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
                 <th className="px-4 py-3 text-start font-medium">{t('Name')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('National ID number (TC)')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Role')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Type')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Duty type')}</th>
@@ -191,7 +192,7 @@ export function EmployeesPageContent() {
               {employees === null &&
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-3.5" colSpan={7}>
+                    <td className="px-4 py-3.5" colSpan={8}>
                       <div className="h-4 w-full animate-pulse rounded bg-neutral-100" />
                     </td>
                   </tr>
@@ -199,7 +200,7 @@ export function EmployeesPageContent() {
 
               {employees !== null && employees.length === 0 && (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={7}>
+                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={8}>
                     {t('No employees yet')}
                   </td>
                 </tr>
@@ -212,6 +213,7 @@ export function EmployeesPageContent() {
                 >
                   <td className="px-4 py-3.5 font-medium text-neutral-800">{employee.fullName}</td>
                   <td className="px-4 py-3.5 text-neutral-500">{employee.phone || '—'}</td>
+                  <td className="px-4 py-3.5 text-neutral-500">{employee.tc || '—'}</td>
                   <td className="px-4 py-3.5">
                     <Badge tone="neutral">
                       {employee.isEntry ? t('Entry kiosk') : t('Employee')}

@@ -7,6 +7,12 @@ class User(AbstractUser):
     type = models.CharField(
         max_length=50, null=True, blank=True, help_text="نوع الدوام"
     )
+    tc = models.CharField(
+        max_length=11, unique=True, null=True, blank=True, help_text="الرقم الوطني (TC)"
+    )
+    entity = models.CharField(
+        max_length=255, null=True, blank=True, help_text="الجهة التي يتبع لها الموظف"
+    )
 
     is_admin = models.BooleanField(default=False)
     is_entry = models.BooleanField(default=False)
@@ -25,6 +31,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.phone = self.phone or None
         self.type = self.type or None
+        self.tc = self.tc or None
+        self.entity = self.entity or None
         super().save(*args, **kwargs)
 
     def __str__(self):

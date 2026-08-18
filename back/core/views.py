@@ -246,6 +246,8 @@ USER_FILTERSET_FIELDS = [
     "last_name",
     "phone",
     "type",
+    "tc",
+    "entity",
     "is_admin",
     "is_entry",
     "is_employee",
@@ -254,7 +256,7 @@ USER_FILTERSET_FIELDS = [
     "is_first_login",
     "device_id",
 ]
-USER_SEARCH_FIELDS = ["first_name", "last_name", "username", "phone"]
+USER_SEARCH_FIELDS = ["first_name", "last_name", "username", "phone", "tc"]
 
 
 def _working_days_in_range(year: int, month: int, up_to_day: int) -> int:

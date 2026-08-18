@@ -3,13 +3,13 @@ export default {
   "Something went wrong, please try again":
     "Something went wrong, please try again",
   Login: "Login",
-  "Username or phone number": "Username or phone number",
   Password: "Password",
   "Sign in": "Sign in",
   "Login with biometrics": "Login with biometrics",
-  "Invalid username or password": "Invalid username or password",
-  "Please enter your username or phone number":
-    "Please enter your username or phone number",
+  "Invalid national ID or password": "Invalid national ID or password",
+  "Please enter your national ID number": "Please enter your national ID number",
+  "National ID number (TC)": "National ID number (TC)",
+  TC: "TC",
   "Please enter your password": "Please enter your password",
   "Sign out": "Sign out",
   "Scan attendance code": "Scan attendance code",

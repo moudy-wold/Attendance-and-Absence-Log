@@ -17,6 +17,7 @@ interface InfoForm {
   lastName: string
   phone: string
   email: string
+  tc: string
 }
 
 interface PasswordForm {
@@ -50,6 +51,7 @@ export function EntryAccountDetailPageContent() {
           lastName: mapped.lastName,
           phone: mapped.phone,
           email: mapped.email ?? '',
+          tc: mapped.tc ?? '',
         })
       })
       .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
@@ -87,6 +89,7 @@ export function EntryAccountDetailPageContent() {
         last_name: infoForm.lastName.trim(),
         phone: infoForm.phone.trim(),
         email: infoForm.email.trim() || undefined,
+        tc: infoForm.tc.trim() || null,
       })
       setAccount(mapUser(data))
       toast.success(t('Saved'))
@@ -192,6 +195,12 @@ export function EntryAccountDetailPageContent() {
               value={infoForm.email}
               onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
               type="email"
+            />
+
+            <TextField
+              label={t('National ID number (TC)')}
+              value={infoForm.tc}
+              onChange={(e) => setInfoForm({ ...infoForm, tc: e.target.value })}
             />
 
             <Button type="submit" loading={isSavingInfo} className="mt-1 w-fit px-5">

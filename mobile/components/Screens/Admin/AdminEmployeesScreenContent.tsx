@@ -137,6 +137,7 @@ export function AdminEmployeesScreenContent() {
               <View style={tw`flex-1 gap-1`}>
                 <Text style={tw`text-sm font-medium text-neutral-800 dark:text-neutral-100`}>{item.fullName}</Text>
                 <Text style={tw`text-xs text-neutral-500`}>{item.phone || '—'}</Text>
+                {item.tc !== null && <Text style={tw`text-xs text-neutral-500`}>{t('TC')}: {item.tc}</Text>}
               </View>
               <View style={tw`items-end gap-1.5`}>
                 <Badge tone={item.isRegular ? 'green' : 'amber'}>{item.isRegular ? t('Regular') : t('Irregular')}</Badge>

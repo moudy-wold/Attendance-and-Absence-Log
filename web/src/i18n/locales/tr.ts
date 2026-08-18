@@ -7,12 +7,9 @@ export default {
   Save: "Kaydet",
 
   Login: "Giriş yap",
-  "Username or phone number": "Kullanıcı adı veya telefon numarası",
   Password: "Şifre",
   "Sign in": "Giriş yap",
-  "Invalid username or password": "Kullanıcı adı veya şifre hatalı",
-  "Please enter your username or phone number":
-    "Lütfen kullanıcı adınızı veya telefon numaranızı girin",
+  "Invalid national ID or password": "TC kimlik numarası veya şifre hatalı",
   "Please enter your password": "Lütfen şifrenizi girin",
   "Sign out": "Çıkış yap",
 
@@ -25,6 +22,7 @@ export default {
 
   Search: "Ara",
   "Name, username or phone": "İsim, kullanıcı adı veya telefon",
+  "Name, username, phone or national ID": "İsim, kullanıcı adı, telefon veya TC kimlik no",
   "+ New account": "+ Yeni hesap",
   "Export to Excel": "Excel'e aktar",
   From: "Başlangıç",
@@ -53,10 +51,13 @@ export default {
   "New account": "Yeni hesap",
   "Account type": "Hesap türü",
   "Password (optional)": "Şifre (isteğe bağlı)",
-  "Leave empty to use the phone number":
-    "Telefon numarasını kullanmak için boş bırakın",
-  "If left empty, the phone number will be used as the password.":
-    "Boş bırakılırsa telefon numarası şifre olarak kullanılır.",
+  "Leave empty to use the national ID number":
+    "Kullanmak için TC kimlik numarasını boş bırakın",
+  "If left empty, the national ID number will be used as the password.":
+    "Boş bırakılırsa TC kimlik numarası şifre olarak kullanılır.",
+  "National ID number (TC)": "TC kimlik numarası",
+  "Please enter your national ID number": "Lütfen TC kimlik numarasını girin",
+  "Entity (optional)": "Kurum (isteğe bağlı)",
   "First name": "Ad",
   "Last name": "Soyad",
   "Phone number": "Telefon numarası",

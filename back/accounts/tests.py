@@ -18,6 +18,19 @@ class UserPhoneUniquenessTests(APITestCase):
         self.assertEqual(User.objects.filter(phone__isnull=True).count(), 2)
 
 
+class UserTcUniquenessTests(APITestCase):
+    def test_duplicate_tc_rejected(self):
+        User.objects.create_user(username="u1", password="x", tc="11111111111")
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                User.objects.create_user(username="u2", password="x", tc="11111111111")
+
+    def test_multiple_users_without_tc_allowed(self):
+        User.objects.create_user(username="u1", password="x")
+        User.objects.create_user(username="u2", password="x")
+        self.assertEqual(User.objects.filter(tc__isnull=True).count(), 2)
+
+
 class RegisterViewTests(APITestCase):
     url = "/api/auth/register/"
 
@@ -30,7 +43,13 @@ class RegisterViewTests(APITestCase):
     def test_generates_username_from_first_last_name(self):
         response = self.client.post(
             self.url,
-            {"first_name": "Ali", "last_name": "Hassan", "password": "StrongPass@123", "is_employee": True},
+            {
+                "first_name": "Ali",
+                "last_name": "Hassan",
+                "password": "StrongPass@123",
+                "tc": "10000000001",
+                "is_employee": True,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -40,43 +59,54 @@ class RegisterViewTests(APITestCase):
         User.objects.create_user(username="ali.hassan", password="x", first_name="Ali", last_name="Hassan")
         response = self.client.post(
             self.url,
-            {"first_name": "Ali", "last_name": "Hassan", "password": "StrongPass@123", "is_employee": True},
+            {
+                "first_name": "Ali",
+                "last_name": "Hassan",
+                "password": "StrongPass@123",
+                "tc": "10000000002",
+                "is_employee": True,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_requires_first_and_last_name(self):
         response = self.client.post(
-            self.url, {"password": "StrongPass@123", "is_employee": True}, format="json"
+            self.url,
+            {"password": "StrongPass@123", "tc": "10000000003", "is_employee": True},
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("first_name", response.data)
         self.assertIn("last_name", response.data)
 
-    def test_password_falls_back_to_phone_when_omitted(self):
+    def test_requires_tc(self):
         response = self.client.post(
             self.url,
-            {"first_name": "Sami", "last_name": "Nasser", "phone": "0912345678", "is_employee": True},
+            {"first_name": "No", "last_name": "Tc", "password": "StrongPass@123", "is_employee": True},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("tc", response.data)
+
+    def test_password_falls_back_to_tc_when_omitted(self):
+        response = self.client.post(
+            self.url,
+            {"first_name": "Sami", "last_name": "Nasser", "tc": "10000000004", "is_employee": True},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(username="sami.nasser")
-        self.assertTrue(user.check_password("0912345678"))
+        self.assertTrue(user.check_password("10000000004"))
 
-    def test_rejects_when_no_password_and_no_phone(self):
-        response = self.client.post(
-            self.url, {"first_name": "No", "last_name": "Phone", "is_employee": True}, format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_explicit_password_ignores_phone(self):
+    def test_explicit_password_ignores_tc(self):
         response = self.client.post(
             self.url,
             {
                 "first_name": "Explicit",
                 "last_name": "Pwd",
                 "password": "StrongPass@999",
-                "phone": "0999999999",
+                "tc": "10000000005",
                 "is_employee": True,
             },
             format="json",
@@ -84,12 +114,18 @@ class RegisterViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(username="explicit.pwd")
         self.assertTrue(user.check_password("StrongPass@999"))
-        self.assertFalse(user.check_password("0999999999"))
+        self.assertFalse(user.check_password("10000000005"))
 
     def test_weak_password_rejected(self):
         response = self.client.post(
             self.url,
-            {"first_name": "Weak", "last_name": "Pass", "password": "123", "is_employee": True},
+            {
+                "first_name": "Weak",
+                "last_name": "Pass",
+                "password": "123",
+                "tc": "10000000006",
+                "is_employee": True,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -98,7 +134,9 @@ class RegisterViewTests(APITestCase):
         employee = User.objects.create_user(username="emp", password="x", is_employee=True)
         self.client.force_authenticate(employee)
         response = self.client.post(
-            self.url, {"first_name": "A", "last_name": "B", "password": "StrongPass@123"}, format="json"
+            self.url,
+            {"first_name": "A", "last_name": "B", "password": "StrongPass@123", "tc": "10000000007"},
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -106,16 +144,43 @@ class RegisterViewTests(APITestCase):
         User.objects.create_user(username="existing", password="x", phone="0912345678")
         response = self.client.post(
             self.url,
-            {"first_name": "Dup", "last_name": "Phone", "password": "StrongPass@123", "phone": "0912345678"},
+            {
+                "first_name": "Dup",
+                "last_name": "Phone",
+                "password": "StrongPass@123",
+                "phone": "0912345678",
+                "tc": "10000000008",
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("phone", response.data)
 
+    def test_duplicate_tc_rejected_by_register_api(self):
+        User.objects.create_user(username="existing2", password="x", tc="10000000009")
+        response = self.client.post(
+            self.url,
+            {
+                "first_name": "Dup",
+                "last_name": "Tc",
+                "password": "StrongPass@123",
+                "tc": "10000000009",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("tc", response.data)
+
     def test_new_user_defaults_is_first_login_true(self):
         response = self.client.post(
             self.url,
-            {"first_name": "First", "last_name": "Login", "password": "StrongPass@123", "is_employee": True},
+            {
+                "first_name": "First",
+                "last_name": "Login",
+                "password": "StrongPass@123",
+                "tc": "10000000010",
+                "is_employee": True,
+            },
             format="json",
         )
         self.assertTrue(response.data["is_first_login"])
@@ -124,29 +189,37 @@ class RegisterViewTests(APITestCase):
 class LoginDeviceBindingTests(APITestCase):
     url = "/api/auth/login/"
 
+    employee_tc = "20000000001"
+    entry_tc = "20000000002"
+    admin_tc = "20000000003"
+
     def setUp(self):
         self.employee = User.objects.create_user(
-            username="employee1", password="Employee@12345", is_employee=True
+            username="employee1", password="Employee@12345", is_employee=True, tc=self.employee_tc
         )
-        self.entry = User.objects.create_user(username="entry1", password="Entry@12345", is_entry=True)
-        self.admin = User.objects.create_superuser(username="admin", password="Admin@12345", is_admin=True)
+        self.entry = User.objects.create_user(
+            username="entry1", password="Entry@12345", is_entry=True, tc=self.entry_tc
+        )
+        self.admin = User.objects.create_superuser(
+            username="admin", password="Admin@12345", is_admin=True, tc=self.admin_tc
+        )
 
     def test_admin_login_without_device_id(self):
         response = self.client.post(
-            self.url, {"username": "admin", "password": "Admin@12345"}, format="json"
+            self.url, {"username": self.admin_tc, "password": "Admin@12345"}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_employee_login_without_device_id_rejected(self):
         response = self.client.post(
-            self.url, {"username": "employee1", "password": "Employee@12345"}, format="json"
+            self.url, {"username": self.employee_tc, "password": "Employee@12345"}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_first_login_binds_device(self):
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -158,7 +231,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.employee.save()
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -168,7 +241,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.employee.save()
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceB"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceB"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -178,7 +251,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.entry.save()
         response = self.client.post(
             self.url,
-            {"username": "entry1", "password": "Entry@12345", "device_id": "entryDeviceB"},
+            {"username": self.entry_tc, "password": "Entry@12345", "device_id": "entryDeviceB"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -188,7 +261,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.employee.save()
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -198,7 +271,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.employee.save()
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         # 401 بنفس رسالة بيانات الدخول الخاطئة العادية — عمدًا لا يُميَّز هذا عن محاولة دخول
@@ -217,7 +290,7 @@ class LoginDeviceBindingTests(APITestCase):
         self.employee.save()
         response = self.client.post(
             self.url,
-            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": self.employee_tc, "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -227,26 +300,23 @@ class LoginDeviceBindingTests(APITestCase):
         self.entry.save()
         response = self.client.post(
             self.url,
-            {"username": "entry1", "password": "Entry@12345", "device_id": "entryDeviceA"},
+            {"username": self.entry_tc, "password": "Entry@12345", "device_id": "entryDeviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_login_with_phone_number(self):
-        self.employee.phone = "0991655832"
-        self.employee.save()
+    def test_login_with_unknown_tc_rejected(self):
         response = self.client.post(
             self.url,
-            {"username": "0991655832", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": "00000000000", "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"]["username"], "employee1")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_login_with_unknown_phone_rejected(self):
+    def test_login_with_username_no_longer_works(self):
         response = self.client.post(
             self.url,
-            {"username": "0000000000", "password": "Employee@12345", "device_id": "deviceA"},
+            {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

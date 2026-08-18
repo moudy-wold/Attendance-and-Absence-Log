@@ -3,12 +3,14 @@ import type { RawUser } from '../types/user'
 import type { RawEmployeeAttendance } from '../types/attendance'
 
 export interface RegisterPayload {
-  /** Omit entirely (don't send an empty string) to default the password to the phone number. */
+  /** Omit entirely (don't send an empty string) to default the password to the national ID (tc). */
   password?: string
   first_name: string
   last_name: string
   phone: string
   type?: string | null
+  tc: string
+  entity?: string | null
   is_employee: boolean
   is_entry: boolean
   is_regular: boolean
@@ -24,6 +26,8 @@ export interface UpdateUserPayload {
   email?: string
   phone?: string
   type?: string | null
+  tc?: string | null
+  entity?: string | null
   is_regular?: boolean
   is_active?: boolean
   device_id?: string | null

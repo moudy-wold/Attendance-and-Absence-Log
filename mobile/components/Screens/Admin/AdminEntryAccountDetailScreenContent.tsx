@@ -54,6 +54,11 @@ export function AdminEntryAccountDetailScreenContent() {
             <Text style={tw`text-sm text-neutral-500`}>
               {account.username} · {account.phone || '—'}
             </Text>
+            {account.tc !== null && (
+              <Text style={tw`text-sm text-neutral-500`}>
+                {t('TC')}: {account.tc}
+              </Text>
+            )}
             {account.email && <Text style={tw`text-sm text-neutral-500`}>{account.email}</Text>}
             <Badge tone={account.isActive ? 'green' : 'red'}>{account.isActive ? t('Active') : t('Suspended')}</Badge>
             <Text style={tw`text-xs text-neutral-500`}>

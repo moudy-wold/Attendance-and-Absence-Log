@@ -73,6 +73,8 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "phone",
             "type",
+            "tc",
+            "entity",
             "is_admin",
             "is_entry",
             "is_employee",
@@ -100,18 +102,17 @@ class RegisterSerializer(serializers.ModelSerializer):
             "last_name",
             "phone",
             "type",
+            "tc",
+            "entity",
             "is_admin",
             "is_entry",
             "is_employee",
             "is_regular",
         ]
+        extra_kwargs = {"tc": {"required": True}}
 
     def create(self, validated_data):
-        password = validated_data.pop("password", "") or validated_data.get("phone")
-        if not password:
-            raise serializers.ValidationError(
-                {"detail": "Either password or phone is required to create a user."}
-            )
+        password = validated_data.pop("password", "") or validated_data["tc"]
         username = self._generate_username(
             validated_data["first_name"], validated_data["last_name"]
         )
@@ -146,6 +147,8 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             "last_name",
             "phone",
             "type",
+            "tc",
+            "entity",
             "is_admin",
             "is_entry",
             "is_employee",

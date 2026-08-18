@@ -40,7 +40,7 @@ export function LoginPageContent() {
 
   function validate(): Partial<Record<keyof LoginForm, string>> {
     const next: Partial<Record<keyof LoginForm, string>> = {}
-    if (!form.username.trim()) next.username = t('Please enter your username or phone number')
+    if (!form.username.trim()) next.username = t('Please enter your national ID number')
     if (!form.password) next.password = t('Please enter your password')
     return next
   }
@@ -69,7 +69,7 @@ export function LoginPageContent() {
     } catch (error) {
       const message =
         isAxiosError(error) && error.response?.status === 401
-          ? t('Invalid username or password')
+          ? t('Invalid national ID or password')
           : extractApiError(error, t('Something went wrong, please try again'))
       setTopError(message)
       toast.error(message)
@@ -105,7 +105,7 @@ export function LoginPageContent() {
           )}
 
           <TextField
-            label={t('Username or phone number')}
+            label={t('National ID number (TC)')}
             value={form.username}
             onChange={handleChange('username')}
             error={errors.username}

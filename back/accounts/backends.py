@@ -1,12 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.db.models import Q
 
 UserModel = get_user_model()
 
 
-class PhoneOrUsernameBackend(ModelBackend):
-    """يسمح بتسجيل الدخول عبر اسم المستخدم أو رقم الهاتف في نفس الحقل."""
+class NationalIdBackend(ModelBackend):
+    """يسمح بتسجيل الدخول عبر الرقم الوطني (tc) فقط — بديل عن اسم المستخدم ورقم الهاتف."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
@@ -14,18 +13,10 @@ class PhoneOrUsernameBackend(ModelBackend):
         if username is None or password is None:
             return None
         try:
-            user = UserModel._default_manager.get(
-                Q(username=username) | Q(phone=username)
-            )
+            user = UserModel._default_manager.get(tc=username)
         except UserModel.DoesNotExist:
             UserModel().set_password(password)
             return None
-        except UserModel.MultipleObjectsReturned:
-            user = (
-                UserModel._default_manager.filter(Q(username=username) | Q(phone=username))
-                .order_by("pk")
-                .first()
-            )
         if user.check_password(password) and self.user_can_authenticate(user):
             return user
         return None

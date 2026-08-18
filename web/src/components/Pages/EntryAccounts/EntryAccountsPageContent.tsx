@@ -132,6 +132,7 @@ export function EntryAccountsPageContent() {
               <tr className="border-b border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
                 <th className="px-4 py-3 text-start font-medium">{t('Name')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Phone')}</th>
+                <th className="px-4 py-3 text-start font-medium">{t('National ID number (TC)')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Device')}</th>
                 <th className="px-4 py-3 text-start font-medium">{t('Active/Inactive')}</th>
                 <th className="px-4 py-3 text-start font-medium" >{t('Actions')}</th>
@@ -141,7 +142,7 @@ export function EntryAccountsPageContent() {
               {entryUsers === null &&
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-3.5" colSpan={5}>
+                    <td className="px-4 py-3.5" colSpan={6}>
                       <div className="h-4 w-full animate-pulse rounded bg-neutral-100" />
                     </td>
                   </tr>
@@ -149,7 +150,7 @@ export function EntryAccountsPageContent() {
 
               {entryUsers !== null && entryUsers.length === 0 && (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={5}>
+                  <td className="px-4 py-8 text-center text-sm text-neutral-400" colSpan={6}>
                     {t('No kiosk accounts yet')}
                   </td>
                 </tr>
@@ -162,6 +163,7 @@ export function EntryAccountsPageContent() {
                 >
                   <td className="px-4 py-3.5 font-medium text-neutral-800">{user.fullName}</td>
                   <td className="px-4 py-3.5 text-neutral-500">{user.phone || '—'}</td>
+                  <td className="px-4 py-3.5 text-neutral-500">{user.tc || '—'}</td>
                   <td className="px-4 py-3.5">
                     <Badge tone={user.deviceId ? 'green' : 'neutral'}>
                       {user.deviceId ? t('Bound to a device') : t('Not bound to any device yet')}

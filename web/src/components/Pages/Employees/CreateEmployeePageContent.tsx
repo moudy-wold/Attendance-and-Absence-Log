@@ -19,6 +19,8 @@ interface EmployeeForm {
   lastName: string
   phone: string
   type: string
+  tc: string
+  entity: string
   accountType: AccountType
   isRegular: boolean
 }
@@ -29,11 +31,21 @@ const initialForm: EmployeeForm = {
   lastName: '',
   phone: '',
   type: '',
+  tc: '',
+  entity: '',
   accountType: 'employee',
   isRegular: true,
 }
 
-const fieldOrder: (keyof EmployeeForm)[] = ['firstName', 'lastName', 'phone', 'type', 'password']
+const fieldOrder: (keyof EmployeeForm)[] = [
+  'firstName',
+  'lastName',
+  'phone',
+  'tc',
+  'type',
+  'entity',
+  'password',
+]
 
 export function CreateEmployeePageContent() {
   const { t } = useTranslation()
@@ -55,6 +67,7 @@ export function CreateEmployeePageContent() {
     if (!form.firstName.trim()) next.firstName = t('Please enter the first name')
     if (!form.lastName.trim()) next.lastName = t('Please enter the last name')
     if (!form.phone.trim()) next.phone = t('Please enter a phone number')
+    if (!form.tc.trim()) next.tc = t('Please enter your national ID number')
     if (form.password && form.password.length < 8) next.password = t('Password must be at least 8 characters')
     return next
   }
@@ -79,6 +92,8 @@ export function CreateEmployeePageContent() {
         last_name: form.lastName.trim(),
         phone: form.phone.trim(),
         type: form.type.trim() || undefined,
+        tc: form.tc.trim(),
+        entity: form.entity.trim() || undefined,
         is_employee: form.accountType === 'employee',
         is_entry: form.accountType === 'entry',
         is_regular: form.accountType === 'employee' ? form.isRegular : true,
@@ -132,10 +147,24 @@ export function CreateEmployeePageContent() {
         />
 
         <TextField
+          label={t('National ID number (TC)')}
+          value={form.tc}
+          onChange={handleChange('tc')}
+          error={errors.tc}
+        />
+
+        <TextField
           label={t('Duty type (optional)')}
           value={form.type}
           onChange={handleChange('type')}
           error={errors.type}
+        />
+
+        <TextField
+          label={t('Entity (optional)')}
+          value={form.entity}
+          onChange={handleChange('entity')}
+          error={errors.entity}
         />
 
         <div>
@@ -145,9 +174,9 @@ export function CreateEmployeePageContent() {
             onChange={handleChange('password')}
             error={errors.password}
             autoComplete="new-password"
-            placeholder={t('Leave empty to use the phone number')}
+            placeholder={t('Leave empty to use the national ID number')}
           />
-          <p className="mt-1.5 text-xs text-neutral-500">{t('If left empty, the phone number will be used as the password.')}</p>
+          <p className="mt-1.5 text-xs text-neutral-500">{t('If left empty, the national ID number will be used as the password.')}</p>
         </div>
 
         {form.accountType === 'employee' && (

@@ -78,6 +78,11 @@ export function AdminEmployeeDetailScreenContent() {
             <Text style={tw`text-sm text-neutral-500`}>
               {employee.username} · {employee.phone || '—'}
             </Text>
+            {employee.tc !== null && (
+              <Text style={tw`text-sm text-neutral-500`}>
+                {t('TC')}: {employee.tc}
+              </Text>
+            )}
             <View style={tw`flex-row flex-wrap gap-2`}>
               <Badge tone={employee.isRegular ? 'green' : 'amber'}>
                 {employee.isRegular ? t('Regular') : t('Irregular')}

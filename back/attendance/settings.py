@@ -76,8 +76,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = "accounts.User"
 
 AUTHENTICATION_BACKENDS = [
-    "accounts.backends.PhoneOrUsernameBackend",
-    "django.contrib.auth.backends.ModelBackend",
+    "accounts.backends.NationalIdBackend",
 ]
 
 REST_FRAMEWORK = {

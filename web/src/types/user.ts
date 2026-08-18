@@ -7,6 +7,8 @@ export interface User {
   email: string | null
   phone: string
   type: string | null
+  tc: string | null
+  entity: string | null
   isAdmin: boolean
   isEntry: boolean
   isActive: boolean
@@ -25,6 +27,8 @@ export interface RawUser {
   email: string | null
   phone: string
   type: string | null
+  tc: string | null
+  entity: string | null
   is_admin: boolean
   is_entry: boolean
   is_active: boolean
@@ -44,6 +48,8 @@ export function mapUser(raw: RawUser): User {
     email: raw.email,
     phone: raw.phone,
     type: raw.type,
+    tc: raw.tc,
+    entity: raw.entity,
     isAdmin: raw.is_admin,
     isEntry: raw.is_entry,
     isActive: raw.is_active,

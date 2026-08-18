@@ -19,6 +19,8 @@ interface InfoForm {
   phone: string
   email: string
   type: string
+  tc: string
+  entity: string
 }
 
 interface PasswordForm {
@@ -53,6 +55,8 @@ export function EmployeeDetailPageContent() {
           phone: mapped.phone,
           email: mapped.email ?? '',
           type: mapped.type ?? '',
+          tc: mapped.tc ?? '',
+          entity: mapped.entity ?? '',
         })
       })
       .catch((error) => toast.error(extractApiError(error, t('Something went wrong, please try again'))))
@@ -91,6 +95,8 @@ export function EmployeeDetailPageContent() {
         phone: infoForm.phone.trim(),
         email: infoForm.email.trim() || undefined,
         type: infoForm.type.trim() || null,
+        tc: infoForm.tc.trim() || null,
+        entity: infoForm.entity.trim() || null,
       })
       setEmployee(mapUser(data))
       toast.success(t('Saved'))
@@ -210,9 +216,21 @@ export function EmployeeDetailPageContent() {
             />
 
             <TextField
+              label={t('National ID number (TC)')}
+              value={infoForm.tc}
+              onChange={(e) => setInfoForm({ ...infoForm, tc: e.target.value })}
+            />
+
+            <TextField
               label={t('Duty type (optional)')}
               value={infoForm.type}
               onChange={(e) => setInfoForm({ ...infoForm, type: e.target.value })}
+            />
+
+            <TextField
+              label={t('Entity (optional)')}
+              value={infoForm.entity}
+              onChange={(e) => setInfoForm({ ...infoForm, entity: e.target.value })}
             />
 
             <Button type="submit" loading={isSavingInfo} className="mt-1 w-fit px-5">

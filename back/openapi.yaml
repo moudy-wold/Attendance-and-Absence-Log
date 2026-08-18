@@ -51,6 +51,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: entity
+        schema:
+          type: string
+      - in: query
         name: first_name
         schema:
           type: string
@@ -96,6 +100,10 @@ paths:
         required: false
         in: query
         description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tc
         schema:
           type: string
       - in: query
@@ -191,6 +199,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: entity
+        schema:
+          type: string
+      - in: query
         name: first_name
         schema:
           type: string
@@ -236,6 +248,10 @@ paths:
         required: false
         in: query
         description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tc
         schema:
           type: string
       - in: query
@@ -966,6 +982,16 @@ components:
           nullable: true
           description: نوع الدوام
           maxLength: 50
+        tc:
+          type: string
+          nullable: true
+          description: الرقم الوطني (TC)
+          maxLength: 11
+        entity:
+          type: string
+          nullable: true
+          description: الجهة التي يتبع لها الموظف
+          maxLength: 255
         is_admin:
           type: boolean
         is_entry:
@@ -1159,6 +1185,16 @@ components:
           nullable: true
           description: نوع الدوام
           maxLength: 50
+        tc:
+          type: string
+          nullable: true
+          description: الرقم الوطني (TC)
+          maxLength: 11
+        entity:
+          type: string
+          nullable: true
+          description: الجهة التي يتبع لها الموظف
+          maxLength: 255
         is_admin:
           type: boolean
         is_entry:
@@ -1239,6 +1275,16 @@ components:
           nullable: true
           description: نوع الدوام
           maxLength: 50
+        tc:
+          type: string
+          nullable: true
+          description: الرقم الوطني (TC)
+          maxLength: 11
+        entity:
+          type: string
+          nullable: true
+          description: الجهة التي يتبع لها الموظف
+          maxLength: 255
         is_admin:
           type: boolean
         is_entry:
@@ -1251,6 +1297,7 @@ components:
       - first_name
       - id
       - last_name
+      - tc
     SystemSettings:
       type: object
       properties:
@@ -1333,6 +1380,16 @@ components:
           nullable: true
           description: نوع الدوام
           maxLength: 50
+        tc:
+          type: string
+          nullable: true
+          description: الرقم الوطني (TC)
+          maxLength: 11
+        entity:
+          type: string
+          nullable: true
+          description: الجهة التي يتبع لها الموظف
+          maxLength: 255
         is_admin:
           type: boolean
         is_entry:
@@ -1392,6 +1449,16 @@ components:
           nullable: true
           description: نوع الدوام
           maxLength: 50
+        tc:
+          type: string
+          nullable: true
+          description: الرقم الوطني (TC)
+          maxLength: 11
+        entity:
+          type: string
+          nullable: true
+          description: الجهة التي يتبع لها الموظف
+          maxLength: 255
         is_admin:
           type: boolean
         is_entry:

@@ -5,13 +5,13 @@ export default {
   "Something went wrong, please try again":
     "Bir şeyler ters gitti, lütfen tekrar deneyin",
   Login: "Giriş yap",
-  "Username or phone number": "Kullanıcı adı veya telefon numarası",
   Password: "Şifre",
   "Sign in": "Giriş yap",
   "Login with biometrics": "Biyometrik ile giriş yap",
-  "Invalid username or password": "Kullanıcı adı veya şifre hatalı",
-  "Please enter your username or phone number":
-    "Lütfen kullanıcı adınızı veya telefon numaranızı girin",
+  "Invalid national ID or password": "TC kimlik numarası veya şifre hatalı",
+  "Please enter your national ID number": "Lütfen TC kimlik numarasını girin",
+  "National ID number (TC)": "TC kimlik numarası",
+  TC: "TC",
   "Please enter your password": "Lütfen şifrenizi girin",
   "Sign out": "Çıkış yap",
   "Scan attendance code": "Devam kodunu tara",
