@@ -39,7 +39,7 @@ export function LoginScreenContent() {
   // Only decides whether to show the button — never triggers the biometric
   // prompt itself. The prompt only ever opens from the button's onPress.
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const [session, available] = await Promise.all([getBiometricSession(), isBiometricAvailable()])
       setShowBiometricButton(Boolean(session) && available)
     })()
@@ -86,18 +86,20 @@ export function LoginScreenContent() {
     setTopError(null)
     try {
       const loggedInUser = await login(form)
+      console.log(loggedInUser, "ssss")
       if (loggedInUser.isFirstLogin) {
         setMustChangePassword(true)
         return
       }
       router.replace('/')
     } catch (error) {
+      console.error(error, "error111")
       const message =
         isAxiosError(error) && error.response?.status === 401
           ? t('Invalid national ID or password')
           : extractApiError(error, t('Something went wrong, please try again'))
-      setTopError(message)
-      Toast.show({ type: 'error', text1: message })
+      setTopError(t(message))
+      Toast.show({ type: 'error', text1: t(message) })
     } finally {
       setIsSubmitting(false)
     }
@@ -149,6 +151,7 @@ export function LoginScreenContent() {
           autoCorrect={false}
           autoComplete="username"
           onSubmitEditing={() => passwordRef.current?.focus()}
+          returnKeyType="next"
         />
 
         <PasswordField
@@ -157,6 +160,8 @@ export function LoginScreenContent() {
           onChangeText={handleChange('password')}
           error={errors.password}
           ref={passwordRef}
+          onSubmitEditing={() => { handleSubmit() }}
+
         />
 
         <Button onPress={handleSubmit} loading={isSubmitting}>

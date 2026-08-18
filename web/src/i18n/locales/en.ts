@@ -17,7 +17,8 @@ export default {
   Settings: "Settings",
   Search: "Search",
   "Name, username or phone": "Name, username or phone",
-  "Name, username, phone or national ID": "Name, username, phone or national ID",
+  "Name, username, phone or national ID":
+    "Name, username, phone or national ID",
   "+ New account": "+ New account",
   "Export to Excel": "Export to Excel",
   From: "From",
@@ -45,11 +46,13 @@ export default {
   "New account": "New account",
   "Account type": "Account type",
   "Password (optional)": "Password (optional)",
-  "Leave empty to use the national ID number": "Leave empty to use the national ID number",
+  "Leave empty to use the national ID number":
+    "Leave empty to use the national ID number",
   "If left empty, the national ID number will be used as the password.":
     "If left empty, the national ID number will be used as the password.",
   "National ID number (TC)": "National ID number (TC)",
-  "Please enter your national ID number": "Please enter your national ID number",
+  "Please enter your national ID number":
+    "Please enter your national ID number",
   "Entity (optional)": "Entity (optional)",
   "First name": "First name",
   "Last name": "Last name",
@@ -84,7 +87,8 @@ export default {
   "Check out": "Check out",
   Sessions: "Sessions",
   Close: "Close",
-  "No attendance records for this period": "No attendance records for this period",
+  "No attendance records for this period":
+    "No attendance records for this period",
   "Attendance kiosk": "Attendance kiosk",
   "Generating…": "Generating…",
   "Refreshes in": "Refreshes in",
@@ -152,11 +156,13 @@ export default {
   "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
     "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.",
   "Irregular employees are now blocked": "Irregular employees are now blocked",
-  "Irregular employees can now log in again": "Irregular employees can now log in again",
+  "Irregular employees can now log in again":
+    "Irregular employees can now log in again",
   "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
     "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?",
   "Irregular employees will be able to sign in again. Continue?":
     "Irregular employees will be able to sign in again. Continue?",
   "Block them": "Block them",
   "Allow them": "Allow them",
+  "user with this tc already exists.": "user with this tc already exists.",
 };

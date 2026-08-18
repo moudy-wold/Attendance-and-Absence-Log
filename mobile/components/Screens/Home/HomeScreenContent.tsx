@@ -161,7 +161,7 @@ export function HomeScreenContent() {
               <Text style={tw`text-center text-base font-semibold text-neutral-900 dark:text-white`}>
                 {step.action === 'check_in' ? t('Check-in recorded') : t('Check-out recorded')}
               </Text>
-              <Button onPress={resetToScanning}>{t('Scan again')}</Button>
+              <Button style={tw`px-2`} onPress={resetToScanning}>{t('Scan again')}</Button>
             </>
           )}
 
@@ -169,7 +169,7 @@ export function HomeScreenContent() {
             <>
               <Text style={tw`text-center text-sm text-red-500`}>{step.message}</Text>
               <View style={tw`w-full gap-3`}>
-                <Button onPress={resetToScanning}>{t('Scan again')}</Button>
+                <Button style={tw`px-2`} onPress={resetToScanning}>{t('Scan again')}</Button>
               </View>
             </>
           )}

@@ -68,7 +68,7 @@ export function EntryAccountDetailPageContent() {
       setAccount(mapUser(data))
       toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('Something went wrong, please try again')))
+      toast.error(t(extractApiError(error, t('Something went wrong, please try again'))))
     }
   }
 
@@ -94,7 +94,7 @@ export function EntryAccountDetailPageContent() {
       setAccount(mapUser(data))
       toast.success(t('Saved'))
     } catch (error) {
-      toast.error(extractApiError(error, t('Something went wrong, please try again')))
+      toast.error(t(extractApiError(error, t('Something went wrong, please try again'))))
     } finally {
       setIsSavingInfo(false)
     }

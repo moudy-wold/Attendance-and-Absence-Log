@@ -22,7 +22,8 @@ export default {
 
   Search: "Ara",
   "Name, username or phone": "İsim, kullanıcı adı veya telefon",
-  "Name, username, phone or national ID": "İsim, kullanıcı adı, telefon veya TC kimlik no",
+  "Name, username, phone or national ID":
+    "İsim, kullanıcı adı, telefon veya TC kimlik no",
   "+ New account": "+ Yeni hesap",
   "Export to Excel": "Excel'e aktar",
   From: "Başlangıç",
@@ -165,11 +166,14 @@ export default {
   "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
     "Açıkken geçici çalışanlar giriş yapamaz — ve zaten giriş yapmış olanların erişimi anında kesilir. Onlara yanlış kullanıcı adı veya şifre ile aynı hata gösterilir.",
   "Irregular employees are now blocked": "Geçici çalışanlar artık engellendi",
-  "Irregular employees can now log in again": "Geçici çalışanlar artık tekrar giriş yapabilir",
+  "Irregular employees can now log in again":
+    "Geçici çalışanlar artık tekrar giriş yapabilir",
   "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
     "Tüm geçici çalışanların oturumu anında kapatılacak ve bu seçeneği kapatana kadar tekrar giriş yapamayacaklar. Devam edilsin mi?",
   "Irregular employees will be able to sign in again. Continue?":
     "Geçici çalışanlar tekrar giriş yapabilecek. Devam edilsin mi?",
   "Block them": "Engelle",
   "Allow them": "İzin ver",
+  "user with this tc already exists.":
+    "Bu TC kimlik numarasıyla bir kullanıcı zaten mevcut.",
 } satisfies typeof en;

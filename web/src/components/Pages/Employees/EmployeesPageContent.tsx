@@ -105,9 +105,9 @@ export function EmployeesPageContent() {
       <AdminHeader title={t('Employees')} />
 
       <div className="flex flex-1 flex-col gap-4 p-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="w-full max-w-xs">
+            <div className="w-64">
               <TextField
                 label={t('Search')}
                 value={searchInput}
@@ -115,7 +115,7 @@ export function EmployeesPageContent() {
                 placeholder={t('Name, username, phone or national ID')}
               />
             </div>
-            <div className="w-40">
+            <div className="w-36">
               <SelectField
                 label={t('Type')}
                 value={regularFilter}
@@ -129,7 +129,7 @@ export function EmployeesPageContent() {
                 <option value="no">{t('Irregular')}</option>
               </SelectField>
             </div>
-            <div className="w-40">
+            <div className="w-36">
               <SelectField
                 label={t('Status')}
                 value={activeFilter}
@@ -144,30 +144,33 @@ export function EmployeesPageContent() {
               </SelectField>
             </div>
           </div>
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="w-36">
-              <TextField
-                label={t('From')}
-                type="date"
-                value={exportStartDate}
-                onChange={(e) => setExportStartDate(e.target.value)}
-              />
+
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="w-36">
+                <TextField
+                  label={t('From')}
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                />
+              </div>
+              <div className="w-36">
+                <TextField
+                  label={t('To')}
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={handleExport}
+                loading={isExporting}
+                className="w-fit px-4 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 cursor-pointer hover:bg-neutral-600"
+              >
+                {t('Export to Excel')}
+              </Button>
             </div>
-            <div className="w-36">
-              <TextField
-                label={t('To')}
-                type="date"
-                value={exportEndDate}
-                onChange={(e) => setExportEndDate(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={handleExport}
-              loading={isExporting}
-              className="w-fit px-4 text-neutral-700 ring-1 ring-neutral-200 hover:opacity-100 cursor-pointer hover:bg-neutral-600"
-            >
-              {t('Export to Excel')}
-            </Button>
             <Button className="w-fit px-4" onClick={() => navigate('/employees/new')}>
               {t('+ New account')}
             </Button>

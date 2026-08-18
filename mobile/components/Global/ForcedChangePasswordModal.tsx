@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, Text } from 'react-native'
+import { useRef, useState } from 'react'
+import { View, Text, TextInput } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useTranslation } from 'react-i18next'
 import Toast from 'react-native-toast-message'
@@ -30,6 +30,9 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
   const [form, setForm] = useState<Form>({ ...initialForm, oldPassword: currentPassword ?? '' })
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const newPasswordRef = useRef<TextInput>(null)
+  const confirmPasswordRef = useRef<TextInput>(null)
 
   function handleChange(field: keyof Form) {
     return (value: string) => {
@@ -92,18 +95,26 @@ export function ForcedChangePasswordModal({ currentPassword, onSuccess }: Forced
           onChangeText={handleChange('oldPassword')}
           error={errors.oldPassword}
           editable={!currentPassword}
+          returnKeyType="next"
+          onSubmitEditing={() => newPasswordRef.current?.focus()}
         />
         <PasswordField
+          ref={newPasswordRef}
           label={t('New password')}
           value={form.newPassword}
           onChangeText={handleChange('newPassword')}
           error={errors.newPassword}
+          returnKeyType="next"
+          onSubmitEditing={() => confirmPasswordRef.current?.focus()}
         />
         <PasswordField
+          ref={confirmPasswordRef}
           label={t('Confirm new password')}
           value={form.confirmPassword}
           onChangeText={handleChange('confirmPassword')}
           error={errors.confirmPassword}
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
         />
 
         <Button onPress={handleSubmit} loading={isSubmitting}>

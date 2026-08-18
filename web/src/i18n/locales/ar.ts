@@ -18,7 +18,8 @@ export default {
   Settings: "الإعدادات",
   Search: "بحث",
   "Name, username or phone": "الاسم أو اسم المستخدم أو الهاتف",
-  "Name, username, phone or national ID": "الاسم أو اسم المستخدم أو الهاتف أو الرقم الوطني",
+  "Name, username, phone or national ID":
+    "الاسم أو اسم المستخدم أو الهاتف أو الرقم الوطني",
   "+ New account": "+ حساب جديد",
   "Export to Excel": "تصدير إلى إكسل",
   From: "من",
@@ -46,7 +47,8 @@ export default {
   "New account": "حساب جديد",
   "Account type": "نوع الحساب",
   "Password (optional)": "كلمة المرور (اختياري)",
-  "Leave empty to use the national ID number": "اتركه فارغًا لاستخدام الرقم الوطني",
+  "Leave empty to use the national ID number":
+    "اتركه فارغًا لاستخدام الرقم الوطني",
   "If left empty, the national ID number will be used as the password.":
     "إذا تُرك فارغًا، سيصبح الرقم الوطني هو كلمة المرور.",
   "National ID number (TC)": "الرقم الوطني (TC)",
@@ -152,11 +154,13 @@ export default {
   "When on, irregular employees cannot sign in — and any of them already signed in are cut off immediately. They see the same error as a wrong username or password.":
     "عند التفعيل، لن يستطيع الموظفون غير النظاميين تسجيل الدخول — وأي منهم مسجّل دخول حاليًا يُقطع وصوله فورًا. تظهر لهم نفس رسالة خطأ اسم المستخدم أو كلمة المرور الخاطئة.",
   "Irregular employees are now blocked": "تم حظر الموظفين غير النظاميين",
-  "Irregular employees can now log in again": "صار بإمكان الموظفين غير النظاميين تسجيل الدخول من جديد",
+  "Irregular employees can now log in again":
+    "صار بإمكان الموظفين غير النظاميين تسجيل الدخول من جديد",
   "All irregular employees will be signed out immediately and unable to sign in again until you turn this off. Continue?":
     "سيتم تسجيل خروج جميع الموظفين غير النظاميين فورًا، ولن يستطيعوا تسجيل الدخول مرة أخرى حتى تُلغي هذا الخيار. متابعة؟",
   "Irregular employees will be able to sign in again. Continue?":
     "سيصبح بإمكان الموظفين غير النظاميين تسجيل الدخول من جديد. متابعة؟",
   "Block them": "احظرهم",
   "Allow them": "اسمح لهم",
+  "user with this tc already exists.": "يوجد مستخدم بهذا الرقم الوطني بالفعل.",
 } satisfies typeof en;
