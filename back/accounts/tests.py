@@ -313,13 +313,27 @@ class LoginDeviceBindingTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_login_with_username_no_longer_works(self):
+    def test_employee_login_with_username_rejected(self):
         response = self.client.post(
             self.url,
             {"username": "employee1", "password": "Employee@12345", "device_id": "deviceA"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_entry_login_with_username_rejected(self):
+        response = self.client.post(
+            self.url,
+            {"username": "entry1", "password": "Entry@12345", "device_id": "entryDeviceA"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_admin_login_with_username_still_works(self):
+        response = self.client.post(
+            self.url, {"username": "admin", "password": "Admin@12345"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class BlockIrregularEmployeesSwitchTests(APITestCase):
