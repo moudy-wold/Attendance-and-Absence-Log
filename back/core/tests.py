@@ -11,11 +11,11 @@ from rest_framework.test import APITestCase
 from .models import Attendance, QRToken, SystemSettings
 from .views import (
     DETAIL_ROW_ABSENT_DAYS,
-    DETAIL_ROW_EARLY_LEAVE_MINUTES,
-    DETAIL_ROW_LATE_MINUTES,
+    DETAIL_ROW_ENTITY,
     DETAIL_ROW_NAME,
     DETAIL_ROW_PHONE,
     DETAIL_ROW_PRESENT_DAYS,
+    DETAIL_ROW_TC,
     DETAIL_ROW_TYPE,
     _count_working_days_between,
     _working_days_in_range,
@@ -455,11 +455,11 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
             rows[0],
             (
                 "اسم الموظف",
+                "الرقم الوطني",
+                "الجهة",
                 "نوع الدوام",
                 "أيام الدوام",
                 "أيام الغياب",
-                "دقائق التأخير",
-                "دقائق الانصراف المبكر",
             ),
         )
 
@@ -467,17 +467,19 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         # تعرضها فقط عبر صيغ ربط (انظر الاختبار التالي).
         detail_sheet = workbook["Test Employee"]
         working_days = _count_working_days_between(date(2024, 1, 1), date(2024, 1, 31))
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TC, column=2).value, "غير محدد")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_ENTITY, column=2).value, "غير محدد")
         self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TYPE, column=2).value, "غير محدد")
         self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=2).value, 2)
         self.assertEqual(
             detail_sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=2).value, working_days - 2
         )
-        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=2).value, 15)
-        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=2).value, 30)
 
     def test_summary_sheet_links_to_employee_detail_sheet(self):
         self.employee.type = "Morning shift"
         self.employee.phone = "0912345678"
+        self.employee.tc = "10000000099"
+        self.employee.entity = "Finance"
         self.employee.save()
         Attendance.objects.create(
             user=self.employee,
@@ -499,18 +501,18 @@ class MonthlyAttendanceSummaryExportTests(APITestCase):
         name_cell = summary_sheet["A2"]
         self.assertEqual(name_cell.value, f"='Test Employee'!A{DETAIL_ROW_NAME}")
         self.assertIsNotNone(name_cell.hyperlink)
-        self.assertEqual(summary_sheet["B2"].value, f"='Test Employee'!B{DETAIL_ROW_TYPE}")
-        self.assertEqual(summary_sheet["C2"].value, f"='Test Employee'!B{DETAIL_ROW_PRESENT_DAYS}")
-        self.assertEqual(summary_sheet["D2"].value, f"='Test Employee'!B{DETAIL_ROW_ABSENT_DAYS}")
-        self.assertEqual(summary_sheet["E2"].value, f"='Test Employee'!B{DETAIL_ROW_LATE_MINUTES}")
-        self.assertEqual(
-            summary_sheet["F2"].value, f"='Test Employee'!B{DETAIL_ROW_EARLY_LEAVE_MINUTES}"
-        )
+        self.assertEqual(summary_sheet["B2"].value, f"='Test Employee'!B{DETAIL_ROW_TC}")
+        self.assertEqual(summary_sheet["C2"].value, f"='Test Employee'!B{DETAIL_ROW_ENTITY}")
+        self.assertEqual(summary_sheet["D2"].value, f"='Test Employee'!B{DETAIL_ROW_TYPE}")
+        self.assertEqual(summary_sheet["E2"].value, f"='Test Employee'!B{DETAIL_ROW_PRESENT_DAYS}")
+        self.assertEqual(summary_sheet["F2"].value, f"='Test Employee'!B{DETAIL_ROW_ABSENT_DAYS}")
 
         self.assertIn("Test Employee", workbook.sheetnames)
         detail_sheet = workbook["Test Employee"]
         self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_NAME, column=1).value, "Test Employee")
         self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_PHONE, column=2).value, "0912345678")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TC, column=2).value, "10000000099")
+        self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_ENTITY, column=2).value, "Finance")
         self.assertEqual(detail_sheet.cell(row=DETAIL_ROW_TYPE, column=2).value, "Morning shift")
         detail_rows = list(detail_sheet.iter_rows(values_only=True))
         self.assertIn(("التاريخ", "وقت الحضور", "وقت الانصراف"), detail_rows)

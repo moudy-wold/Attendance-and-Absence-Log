@@ -355,11 +355,11 @@ EXPORT_SUMMARY_LABELS = {
     "ar": {
         "columns": [
             "اسم الموظف",
+            "الرقم الوطني",
+            "الجهة",
             "نوع الدوام",
             "أيام الدوام",
             "أيام الغياب",
-            "دقائق التأخير",
-            "دقائق الانصراف المبكر",
         ],
         "phone": "الهاتف",
         "not_set": "غير محدد",
@@ -369,11 +369,11 @@ EXPORT_SUMMARY_LABELS = {
     "en": {
         "columns": [
             "Employee name",
+            "National ID",
+            "Entity",
             "Duty type",
             "Days present",
             "Days absent",
-            "Late minutes",
-            "Early leave minutes",
         ],
         "phone": "Phone",
         "not_set": "Not set",
@@ -383,11 +383,11 @@ EXPORT_SUMMARY_LABELS = {
     "tr": {
         "columns": [
             "Çalışan adı",
+            "TC kimlik no",
+            "Kurum",
             "Çalışma türü",
             "Çalışılan gün",
             "Devamsızlık günü",
-            "Geç kalma (dakika)",
-            "Erken çıkış (dakika)",
         ],
         "phone": "Telefon",
         "not_set": "Belirtilmemiş",
@@ -420,11 +420,11 @@ HYPERLINK_FONT = Font(color="0563C1", underline="single")
 # في الورقة الرئيسية عند فتح الملف بإكسل.
 DETAIL_ROW_NAME = 2
 DETAIL_ROW_PHONE = 3
-DETAIL_ROW_TYPE = 4
-DETAIL_ROW_PRESENT_DAYS = 5
-DETAIL_ROW_ABSENT_DAYS = 6
-DETAIL_ROW_LATE_MINUTES = 7
-DETAIL_ROW_EARLY_LEAVE_MINUTES = 8
+DETAIL_ROW_TC = 4
+DETAIL_ROW_ENTITY = 5
+DETAIL_ROW_TYPE = 6
+DETAIL_ROW_PRESENT_DAYS = 7
+DETAIL_ROW_ABSENT_DAYS = 8
 
 
 def _write_employee_detail_sheet(
@@ -440,19 +440,25 @@ def _write_employee_detail_sheet(
     sheet.cell(row=DETAIL_ROW_NAME, column=1, value=full_name).font = Font(bold=True, size=14)
     sheet.cell(row=DETAIL_ROW_PHONE, column=1, value=labels["phone"])
     sheet.cell(row=DETAIL_ROW_PHONE, column=2, value=employee.phone or labels["not_set"])
-    sheet.cell(row=DETAIL_ROW_TYPE, column=1, value=labels["columns"][1])
+    sheet.cell(row=DETAIL_ROW_TC, column=1, value=labels["columns"][1])
+    sheet.cell(
+        row=DETAIL_ROW_TC, column=2,
+        value=employee.tc if employee.tc is not None else labels["not_set"],
+    )
+    sheet.cell(row=DETAIL_ROW_ENTITY, column=1, value=labels["columns"][2])
+    sheet.cell(
+        row=DETAIL_ROW_ENTITY, column=2,
+        value=employee.entity if employee.entity is not None else labels["not_set"],
+    )
+    sheet.cell(row=DETAIL_ROW_TYPE, column=1, value=labels["columns"][3])
     sheet.cell(
         row=DETAIL_ROW_TYPE, column=2,
         value=employee.type if employee.type is not None else labels["not_set"],
     )
-    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=1, value=labels["columns"][2])
+    sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=1, value=labels["columns"][4])
     sheet.cell(row=DETAIL_ROW_PRESENT_DAYS, column=2, value=stats["present_days"])
-    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=1, value=labels["columns"][3])
+    sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=1, value=labels["columns"][5])
     sheet.cell(row=DETAIL_ROW_ABSENT_DAYS, column=2, value=stats["absent_days"])
-    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=1, value=labels["columns"][4])
-    sheet.cell(row=DETAIL_ROW_LATE_MINUTES, column=2, value=stats["late_minutes"])
-    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=1, value=labels["columns"][5])
-    sheet.cell(row=DETAIL_ROW_EARLY_LEAVE_MINUTES, column=2, value=stats["early_leave_minutes"])
 
     sheet.append([])
     sheet.append(labels["detail_columns"])
@@ -471,9 +477,10 @@ def _write_employee_detail_sheet(
 
 
 class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
-    """يصدّر تقرير إكسل يلخّص حضور كل الموظفين خلال نطاق تاريخي محدَّد (من - إلى): أيام دوام،
-    أيام غياب، دقائق تأخير. يُطبَّق نفس فلتر/بحث قائمة الموظفين حتى يطابق الملف ما يراه الأدمن على
-    الشاشة، وتُترجَم عناوينه حسب باراميتر lang (ar/en/tr) لتطابق لغة الواجهة وقت التصدير."""
+    """يصدّر تقرير إكسل يلخّص بيانات كل الموظفين الأساسية (الرقم الوطني، الجهة، نوع الدوام) وحضورهم
+    خلال نطاق تاريخي محدَّد (من - إلى): أيام دوام، أيام غياب. يُطبَّق نفس فلتر/بحث قائمة الموظفين حتى
+    يطابق الملف ما يراه الأدمن على الشاشة، وتُترجَم عناوينه حسب باراميتر lang (ar/en/tr) لتطابق لغة
+    الواجهة وقت التصدير."""
 
     permission_classes = [IsAdminUser]
     queryset = User.objects.filter(is_employee=True).order_by("username")
@@ -524,11 +531,11 @@ class MonthlyAttendanceSummaryExportView(generics.GenericAPIView):
             sheet.append(
                 [
                     f"='{detail_sheet_name}'!A{DETAIL_ROW_NAME}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_TC}",
+                    f"='{detail_sheet_name}'!B{DETAIL_ROW_ENTITY}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_TYPE}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_PRESENT_DAYS}",
                     f"='{detail_sheet_name}'!B{DETAIL_ROW_ABSENT_DAYS}",
-                    f"='{detail_sheet_name}'!B{DETAIL_ROW_LATE_MINUTES}",
-                    f"='{detail_sheet_name}'!B{DETAIL_ROW_EARLY_LEAVE_MINUTES}",
                 ]
             )
             name_cell = sheet.cell(row=sheet.max_row, column=1)
